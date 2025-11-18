@@ -11,25 +11,65 @@ interface VideoPlayerProps {
   rewardTimeSeconds: number;
 }
 
+const parseDuration = (durationStr: string): number => {
+    if (!durationStr || ['N/A', 'Playlist'].includes(durationStr)) {
+        return 0;
+    }
+    const parts = durationStr.split(':').map(Number);
+    let seconds = 0;
+    if (parts.length === 3) { // HH:MM:SS
+        seconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
+    } else if (parts.length === 2) { // MM:SS
+        seconds = parts[0] * 60 + parts[1];
+    } else if (parts.length === 1) { // SS
+        seconds = parts[0];
+    }
+    return isNaN(seconds) ? 0 : seconds;
+};
+
+const formatTime = (timeInSeconds: number): string => {
+    // FIX: Corrected typo from `timeInseconds` to `timeInSeconds`.
+    if (isNaN(timeInSeconds) || timeInSeconds < 0) return '0:00';
+    const totalSeconds = Math.floor(timeInSeconds);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+};
+
 const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onToggleFavorite, rewardAmount, rewardTimeSeconds }) => {
   const [progress, setProgress] = useState(0);
   const [isRewarded, setIsRewarded] = useState(false);
   const playerRef = useRef<HTMLDivElement>(null);
-  const intervalRef = useRef<number | null>(null);
+  const rewardIntervalRef = useRef<number | null>(null);
   const isFavorite = user.favorites.includes(video.id);
+
+  const [currentTime, setCurrentTime] = useState(0);
+  const [totalDuration, setTotalDuration] = useState(0);
+  const playbackIntervalRef = useRef<number | null>(null);
   
   const rewardTimeMs = rewardTimeSeconds * 1000;
 
-  const startTimer = useCallback(() => {
+  useEffect(() => {
+    const durationInSeconds = parseDuration(video.duration);
+    setTotalDuration(durationInSeconds);
+    setCurrentTime(0);
+    setIsRewarded(false);
+    setProgress(0);
+  }, [video.id, video.duration]);
+
+  const startRewardTimer = useCallback(() => {
     if (isRewarded || rewardTimeMs <= 0) return;
-
-    if (intervalRef.current) clearInterval(intervalRef.current);
-
-    intervalRef.current = window.setInterval(() => {
+    if (rewardIntervalRef.current) clearInterval(rewardIntervalRef.current);
+    rewardIntervalRef.current = window.setInterval(() => {
       setProgress(prev => {
         const newProgress = prev + 100;
         if (newProgress >= rewardTimeMs) {
-          if (intervalRef.current) clearInterval(intervalRef.current);
+          if (rewardIntervalRef.current) clearInterval(rewardIntervalRef.current);
           onAddReward(video.id, rewardAmount);
           setIsRewarded(true);
           return rewardTimeMs;
@@ -39,20 +79,46 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
     }, 100);
   }, [isRewarded, onAddReward, video.id, rewardAmount, rewardTimeMs]);
 
-  const stopTimer = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+  const stopRewardTimer = useCallback(() => {
+    if (rewardIntervalRef.current) {
+      clearInterval(rewardIntervalRef.current);
+      rewardIntervalRef.current = null;
     }
   }, []);
 
+  const startPlaybackTimer = useCallback(() => {
+    if (totalDuration <= 0 || playbackIntervalRef.current) return;
+    playbackIntervalRef.current = window.setInterval(() => {
+        setCurrentTime(prev => {
+            if (prev >= totalDuration -1) {
+                return 0; // Loop timer
+            }
+            return prev + 1;
+        });
+    }, 1000);
+  }, [totalDuration]);
+
+  const stopPlaybackTimer = useCallback(() => {
+      if (playbackIntervalRef.current) {
+          clearInterval(playbackIntervalRef.current);
+          playbackIntervalRef.current = null;
+      }
+  }, []);
+
+  const resetPlaybackTimer = useCallback(() => {
+      stopPlaybackTimer();
+      setCurrentTime(0);
+  }, [stopPlaybackTimer]);
+
   const observerCallback = useCallback(([entry]: IntersectionObserverEntry[]) => {
       if (entry.isIntersecting) {
-        startTimer();
+        startRewardTimer();
+        startPlaybackTimer();
       } else {
-        stopTimer();
+        stopRewardTimer();
+        resetPlaybackTimer();
       }
-    }, [startTimer, stopTimer]
+    }, [startRewardTimer, stopRewardTimer, startPlaybackTimer, resetPlaybackTimer]
   );
 
   useEffect(() => {
@@ -65,9 +131,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
       if (currentRef) {
         observer.unobserve(currentRef);
       }
-      stopTimer();
+      stopRewardTimer();
+      stopPlaybackTimer();
     };
-  }, [playerRef, observerCallback, stopTimer]);
+  }, [playerRef, observerCallback, stopRewardTimer, stopPlaybackTimer]);
   
   const getEmbedUrl = (videoItem: Video): string | null => {
       // YouTube
@@ -130,9 +197,23 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 pointer-events-none"></div>
 
-      <div className="absolute bottom-20 left-4 text-white z-10 pr-16">
-        <h3 className="font-bold text-lg shadow-black [text-shadow:1px_1px_2px_var(--tw-shadow-color)]">{video.title}</h3>
-        <p className="text-sm shadow-black [text-shadow:1px_1px_2px_var(--tw-shadow-color)]">{video.channel}</p>
+      <div className="absolute bottom-20 left-4 right-20 text-white z-10 space-y-3">
+        <div>
+            <h3 className="font-bold text-lg shadow-black [text-shadow:1px_1px_2px_var(--tw-shadow-color)]">{video.title}</h3>
+            <p className="text-sm shadow-black [text-shadow:1px_1px_2px_var(--tw-shadow-color)]">{video.channel}</p>
+        </div>
+        {totalDuration > 0 && (
+            <div className="w-full flex items-center gap-2 text-white text-xs font-mono [text-shadow:1px_1px_1px_#000]">
+                <span>{formatTime(currentTime)}</span>
+                <div className="flex-grow bg-white/20 h-1.5 rounded-full">
+                    <div 
+                        className="bg-white h-1.5 rounded-full"
+                        style={{ width: `${(currentTime / totalDuration) * 100}%`, transition: 'width 0.2s linear' }}
+                    ></div>
+                </div>
+                <span>{formatTime(totalDuration)}</span>
+            </div>
+        )}
       </div>
 
       <div className="absolute bottom-24 right-4 flex flex-col items-center space-y-6 z-10">
