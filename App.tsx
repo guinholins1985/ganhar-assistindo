@@ -1,6 +1,8 @@
-import React, { useState, useCallback } from 'react';
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { User, Video, Transaction, Mission, View, ModalType, WithdrawalRequest, AppSettings } from './types';
-import { INITIAL_VIDEOS, INITIAL_MISSIONS, INITIAL_USERS, INITIAL_WITHDRAWAL_REQUESTS, INITIAL_SETTINGS } from './constants';
+import { INITIAL_MISSIONS } from './constants'; 
+import { initDB, getAllUsers, updateUser, deleteUser, getAllVideos, addVideo, updateVideo, deleteVideo, getAllTransactions, addTransaction, getAllWithdrawalRequests, addWithdrawalRequest, updateWithdrawalRequest, getSettings, updateSettings } from './services/dbService';
 import { fetchYouTubeVideoData, fetchDailymotionVideoData, fetchKwaiVideoData } from './services/youtubeService';
 import BottomNav from './components/BottomNav';
 import VideoFeed from './components/VideoFeed';
@@ -18,27 +20,60 @@ const App: React.FC = () => {
   const [isAdminView, setIsAdminView] = useState(false);
   const [newlyAddedVideoId, setNewlyAddedVideoId] = useState<string | null>(null);
 
-  // Simulate a logged-in user
-  const [currentUser, setCurrentUser] = useState<User>(INITIAL_USERS[0]);
+  // Loading and error states
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadingError, setLoadingError] = useState<string | null>(null);
 
-  // Simulate database tables
-  const [users, setUsers] = useState<User[]>(INITIAL_USERS);
-  const [videos, setVideos] = useState<Video[]>(INITIAL_VIDEOS);
-  const [transactions, setTransactions] = useState<Transaction[]>([
-    { id: 't1', type: 'reward', amount: 10, description: 'Watched "Epic Fails Compilation"', timestamp: new Date() },
-    { id: 't2', type: 'bonus', amount: 50, description: 'Daily Login Bonus', timestamp: new Date(Date.now() - 86400000) },
-  ]);
-  const [missions] = useState<Mission[]>(INITIAL_MISSIONS);
-  const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>(INITIAL_WITHDRAWAL_REQUESTS);
-  const [settings, setSettings] = useState<AppSettings>(INITIAL_SETTINGS);
+  // State will be loaded from DB
+  const [users, setUsers] = useState<User[]>([]);
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [missions] = useState<Mission[]>(INITIAL_MISSIONS); // Missions are static for now
+  const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
+  const [settings, setSettings] = useState<AppSettings | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-  const handleAddReward = useCallback((videoId: string, amount: number) => {
+  // Data loading effect
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        await initDB();
+        const [usersData, videosData, transactionsData, requestsData, settingsData] = await Promise.all([
+          getAllUsers(),
+          getAllVideos(),
+          getAllTransactions(),
+          getAllWithdrawalRequests(),
+          getSettings(),
+        ]);
+        
+        setUsers(usersData);
+        setVideos(videosData.sort((a,b) => b.id.localeCompare(a.id))); // sort by newest
+        setTransactions(
+            transactionsData.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+        );
+        setWithdrawalRequests(requestsData);
+        setSettings(settingsData);
+        setCurrentUser(usersData.find(u => u.status === 'active') || null);
+        
+      } catch (error) {
+        console.error("Failed to load data from database:", error);
+        setLoadingError("Failed to load the app. Try reloading it.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const handleAddReward = useCallback(async (videoId: string, amount: number) => {
     const video = videos.find(v => v.id === videoId);
-    if (video) {
-      setCurrentUser(prevUser => ({
-        ...prevUser,
-        balance: prevUser.balance + amount,
-      }));
+    if (video && currentUser) {
+      const updatedUser = {
+        ...currentUser,
+        balance: currentUser.balance + amount,
+      };
+      
       const newTransaction: Transaction = {
         id: `t-${Date.now()}`,
         type: 'reward',
@@ -46,20 +81,36 @@ const App: React.FC = () => {
         description: `Watched "${video.title}"`,
         timestamp: new Date(),
       };
+      
+      await Promise.all([
+        updateUser(updatedUser),
+        addTransaction(newTransaction)
+      ]);
+      
+      setCurrentUser(updatedUser);
+      setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
       setTransactions(prev => [newTransaction, ...prev]);
     }
-  }, [videos]);
+  }, [videos, currentUser]);
 
-  const handleToggleFavorite = useCallback((videoId: string) => {
-    setCurrentUser(prevUser => {
-      const newFavorites = prevUser.favorites.includes(videoId)
-        ? prevUser.favorites.filter(id => id !== videoId)
-        : [...prevUser.favorites, videoId];
-      return { ...prevUser, favorites: newFavorites };
-    });
-  }, []);
+  const handleToggleFavorite = useCallback(async (videoId: string) => {
+    if (!currentUser) return;
+    const isFavorite = currentUser.favorites.includes(videoId);
+    const newFavorites = isFavorite
+        ? currentUser.favorites.filter(id => id !== videoId)
+        : [...currentUser.favorites, videoId];
+
+    const updatedUser = { ...currentUser, favorites: newFavorites };
+    
+    await updateUser(updatedUser);
+    
+    setCurrentUser(updatedUser);
+    setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+
+  }, [currentUser]);
   
   const handleAddVideo = useCallback(async (url: string): Promise<void> => {
+    if (!settings) return;
     let videoData: Partial<Video> | null = null;
     let errorOccurred = false;
 
@@ -76,7 +127,6 @@ const App: React.FC = () => {
         errorOccurred = true;
     }
     
-    // Fallback for non-supported services or API errors
     if (!videoData) {
         try {
             const urlObject = new URL(url);
@@ -104,6 +154,8 @@ const App: React.FC = () => {
         type: isPlaylist ? 'playlist' : 'video',
         status: 'active',
     };
+    
+    await addVideo(newVideo);
 
     setVideos(prevVideos => [newVideo, ...prevVideos]);
     setNewlyAddedVideoId(newVideoId);
@@ -113,9 +165,10 @@ const App: React.FC = () => {
     } else {
         alert(`Vídeo "${newVideo.title}" adicionado com sucesso!`);
     }
-  }, [settings.youtubeApiKey]);
+  }, [settings]);
 
-  const handleRequestWithdrawal = useCallback((amount: number, pixKey: string) => {
+  const handleRequestWithdrawal = useCallback(async (amount: number, pixKey: string) => {
+    if (!currentUser) return;
     if (currentUser.balance >= amount) {
         const newRequest: WithdrawalRequest = {
             id: `wr-${Date.now()}`,
@@ -126,6 +179,9 @@ const App: React.FC = () => {
             status: 'pending',
             requestDate: new Date(),
         };
+        
+        await addWithdrawalRequest(newRequest);
+        
         setWithdrawalRequests(prev => [newRequest, ...prev]);
         setActiveModal(null);
         alert("Solicitação de saque enviada! Será processada por um administrador em breve.");
@@ -134,24 +190,17 @@ const App: React.FC = () => {
     }
   }, [currentUser]);
 
-  const handleProcessWithdrawal = useCallback((requestId: string, status: 'approved' | 'declined') => {
+  const handleProcessWithdrawal = useCallback(async (requestId: string, status: 'approved' | 'declined') => {
       const request = withdrawalRequests.find(r => r.id === requestId);
       if (!request) return;
 
-      if (status === 'approved') {
-          const userIndex = users.findIndex(u => u.id === request.userId);
-          if (userIndex !== -1 && users[userIndex].balance >= request.amount) {
-              const updatedUsers = [...users];
-              updatedUsers[userIndex] = {
-                  ...updatedUsers[userIndex],
-                  balance: updatedUsers[userIndex].balance - request.amount
-              };
-              setUsers(updatedUsers);
-              
-              if (currentUser.id === request.userId) {
-                  setCurrentUser(updatedUsers[userIndex]);
-              }
+      let updatedRequest = { ...request, status };
 
+      if (status === 'approved') {
+          const user = users.find(u => u.id === request.userId);
+          if (user && user.balance >= request.amount) {
+              const updatedUser = { ...user, balance: user.balance - request.amount };
+              
               const newTransaction: Transaction = {
                   id: `t-${Date.now()}`,
                   type: 'withdrawal',
@@ -159,44 +208,58 @@ const App: React.FC = () => {
                   description: `Saque para PIX aprovado`,
                   timestamp: new Date(),
               };
+              
+              await Promise.all([
+                updateUser(updatedUser),
+                addTransaction(newTransaction)
+              ]);
+
+              setUsers(prevUsers => prevUsers.map(u => u.id === updatedUser.id ? updatedUser : u));
+              if (currentUser?.id === request.userId) {
+                  setCurrentUser(updatedUser);
+              }
               setTransactions(prev => [newTransaction, ...prev]);
           } else {
             alert("O usuário não tem fundos suficientes ou não existe.");
-            // Decline it instead if funds are insufficient
-            setWithdrawalRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: 'declined' } : r));
-            return;
+            updatedRequest = { ...request, status: 'declined' };
           }
       }
       
-      setWithdrawalRequests(prev => prev.map(r => r.id === requestId ? { ...r, status } : r));
-  }, [withdrawalRequests, users, currentUser.id]);
+      await updateWithdrawalRequest(updatedRequest);
+      setWithdrawalRequests(prev => prev.map(r => r.id === requestId ? updatedRequest : r));
+  }, [withdrawalRequests, users, currentUser]);
 
-  const handleUpdateUser = (updatedUser: User) => {
+  const handleUpdateUser = async (updatedUser: User) => {
+    await updateUser(updatedUser);
     setUsers(prevUsers => prevUsers.map(u => u.id === updatedUser.id ? updatedUser : u));
-    if(currentUser.id === updatedUser.id) {
+    if(currentUser?.id === updatedUser.id) {
         setCurrentUser(updatedUser);
     }
   };
 
-  const handleDeleteUser = (userId: string) => {
-    if (userId === currentUser.id) {
+  const handleDeleteUser = async (userId: string) => {
+    if (userId === currentUser?.id) {
       alert("Você não pode excluir o usuário atualmente logado.");
       return;
     }
+    await deleteUser(userId);
     setUsers(prevUsers => prevUsers.filter(u => u.id !== userId));
   };
   
-  const handleUpdateVideo = (updatedVideo: Video) => {
+  const handleUpdateVideo = async (updatedVideo: Video) => {
+    await updateVideo(updatedVideo);
     setVideos(prevVideos => prevVideos.map(v => v.id === updatedVideo.id ? updatedVideo : v));
   };
 
-  const handleDeleteVideo = (videoId: string) => {
+  const handleDeleteVideo = async (videoId: string) => {
     const videoTitle = videos.find(v => v.id === videoId)?.title || 'O vídeo selecionado';
+    await deleteVideo(videoId);
     setVideos(prevVideos => prevVideos.filter(v => v.id !== videoId));
     alert(`O vídeo "${videoTitle}" foi excluído com sucesso!`);
   };
 
-  const handleUpdateSettings = (newSettings: AppSettings) => {
+  const handleUpdateSettings = async (newSettings: AppSettings) => {
+    await updateSettings(newSettings);
     setSettings(newSettings);
   };
   
@@ -209,19 +272,47 @@ const App: React.FC = () => {
     const activeVideos = videos.filter(v => v.status === 'active');
     switch (activeView) {
       case 'home':
-        return <VideoFeed videos={activeVideos} user={currentUser} onAddReward={handleAddReward} onToggleFavorite={handleToggleFavorite} newlyAddedVideoId={newlyAddedVideoId} onScrolledToNewVideo={handleScrolledToNewVideo} rewardAmount={settings.rewardPerVideo} rewardTimeSeconds={settings.minWatchTime}/>;
+        return <VideoFeed videos={activeVideos} user={currentUser!} onAddReward={handleAddReward} onToggleFavorite={handleToggleFavorite} newlyAddedVideoId={newlyAddedVideoId} onScrolledToNewVideo={handleScrolledToNewVideo} rewardAmount={settings!.rewardPerVideo} rewardTimeSeconds={settings!.minWatchTime}/>;
       case 'earn':
         return <EarnPage missions={missions} onInvite={() => alert("Invite link copied!")} />;
       case 'profile':
-        return <ProfilePage user={currentUser} transactions={transactions} onWithdraw={() => setActiveModal('withdraw')} />;
+        return <ProfilePage user={currentUser!} transactions={transactions} onWithdraw={() => setActiveModal('withdraw')} />;
       case 'recommendations':
         const watchedVideos = videos.filter(v => transactions.some(t => t.description.includes(v.title)));
         return <AIPoweredRecommendations watchedVideos={watchedVideos} />;
       default:
-        return <VideoFeed videos={activeVideos} user={currentUser} onAddReward={handleAddReward} onToggleFavorite={handleToggleFavorite} newlyAddedVideoId={newlyAddedVideoId} onScrolledToNewVideo={handleScrolledToNewVideo} rewardAmount={settings.rewardPerVideo} rewardTimeSeconds={settings.minWatchTime}/>;
+        return <VideoFeed videos={activeVideos} user={currentUser!} onAddReward={handleAddReward} onToggleFavorite={handleToggleFavorite} newlyAddedVideoId={newlyAddedVideoId} onScrolledToNewVideo={handleScrolledToNewVideo} rewardAmount={settings!.rewardPerVideo} rewardTimeSeconds={settings!.minWatchTime}/>;
     }
   };
   
+  if (isLoading) {
+    return (
+      <div className="bg-black text-white h-screen w-screen flex flex-col items-center justify-center">
+        <svg className="animate-spin h-12 w-12 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p className="text-lg">Carregando seus dados...</p>
+      </div>
+    );
+  }
+
+  if (loadingError || !currentUser || !settings) {
+    return (
+       <div className="bg-black text-white h-screen w-screen flex flex-col items-center justify-center p-4 text-center">
+        <Icon name="warning" className="w-16 h-16 text-red-500 mb-4" />
+        <h1 className="text-2xl font-bold mb-2">Erro Inesperado</h1>
+        <p className="text-gray-400 mb-6">{loadingError || "Não foi possível carregar os dados do usuário ou as configurações."}</p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+        >
+          Recarregar
+        </button>
+      </div>
+    );
+  }
+
   if (isAdminView) {
       return <AdminPanel 
         stats={{

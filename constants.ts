@@ -1,4 +1,5 @@
-import { Video, Mission, User, WithdrawalRequest, AppSettings } from './types';
+
+import { Video, Mission, User, WithdrawalRequest, AppSettings, Transaction } from './types';
 
 export const INITIAL_USERS: User[] = [
   { id: 'u1', name: 'Alice', email: 'alice@example.com', avatarUrl: 'https://picsum.photos/seed/u1/100', balance: 1250.50, favorites: ['v1', 'v3'], status: 'active' },
@@ -75,6 +76,11 @@ export const INITIAL_MISSIONS: Mission[] = [
       progress: 1,
       goal: 1,
     }
+];
+
+export const INITIAL_TRANSACTIONS: Transaction[] = [
+    { id: 't1', type: 'reward', amount: 10, description: 'Watched "Epic Fails Compilation"', timestamp: new Date() },
+    { id: 't2', type: 'bonus', amount: 50, description: 'Daily Login Bonus', timestamp: new Date(Date.now() - 86400000) },
 ];
 
 export const INITIAL_WITHDRAWAL_REQUESTS: WithdrawalRequest[] = [

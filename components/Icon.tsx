@@ -1,6 +1,7 @@
+
 import React from 'react';
 
-type IconName = 'home' | 'earn' | 'add' | 'profile' | 'recommendations' | 'heart' | 'heart-filled' | 'share' | 'comment' | 'close' | 'coin' | 'gift' | 'users' | 'check-circle' | 'cog' | 'dashboard' | 'video-camera' | 'currency-dollar' | 'shield-check' | 'pencil' | 'trash' | 'eye' | 'logout' | 'moon' | 'sun' | 'menu' | 'arrow-left';
+type IconName = 'home' | 'earn' | 'add' | 'profile' | 'recommendations' | 'heart' | 'heart-filled' | 'share' | 'comment' | 'close' | 'coin' | 'gift' | 'users' | 'check-circle' | 'cog' | 'dashboard' | 'video-camera' | 'currency-dollar' | 'shield-check' | 'pencil' | 'trash' | 'eye' | 'logout' | 'moon' | 'sun' | 'menu' | 'arrow-left' | 'warning';
 
 interface IconProps {
   name: IconName;
@@ -35,6 +36,7 @@ const icons: Record<IconName, React.ReactElement> = {
   sun: <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />,
   menu: <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />,
   'arrow-left': <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />,
+  warning: <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />,
 };
 
 
