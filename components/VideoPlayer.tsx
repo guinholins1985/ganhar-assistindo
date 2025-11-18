@@ -76,10 +76,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
           const match = videoItem.url.match(regExp);
           const videoId = (match && match[2].length === 11) ? match[2] : null;
           if (videoId) {
-              const playlistIdMatch = videoItem.url.match(/[?&]list=([^&]+)/);
-              if (playlistIdMatch) {
-                  return `https://www.youtube.com/embed/videoseries?list=${playlistIdMatch[1]}&autoplay=1&mute=1&loop=1&controls=0&showinfo=0&iv_load_policy=3`;
-              }
+              // Always embed the single video, ignore playlist parameters in the URL.
+              // The `&playlist=${videoId}` parameter makes the single video loop.
               return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&iv_load_policy=3`;
           }
       }
