@@ -8,28 +8,30 @@ export const INITIAL_USERS: User[] = [
   { id: 'u4', name: 'Diana', email: 'diana@example.com', avatarUrl: 'https://picsum.photos/seed/u4/100', balance: 532.10, favorites: ['v3'], status: 'active' },
 ];
 
-export const INITIAL_VIDEOS: Video[] = [
-  {
-    id: 'v-1721246400000',
-    url: 'https://vimeo.com/1138613690',
-    title: 'A DAY IN NY',
-    channel: 'Christin Naas',
-    thumbnailUrl: 'https://i.vimeocdn.com/video/1815124119-3f746d8995a004464c18c9855582236d396a927a3c301777b7fbf7c125bb909d-d_1280',
-    duration: '0:57',
-    type: 'video',
-    status: 'active',
-  },
-  {
-    id: 'v-1721242800000',
-    url: 'https://vimeo.com/253986711',
-    title: 'Stunning Iceland',
-    channel: 'Sverrir Thor',
-    thumbnailUrl: 'https://i.vimeocdn.com/video/682976495-75e8c3811867c4a4751f0857503b7082a5c92f7881f28b5f19082f6e9921f73e-d_640',
-    duration: '4:18',
-    type: 'video',
-    status: 'active',
-  },
+const vimeoUrls = [
+  'https://vimeo.com/1138716552', 'https://vimeo.com/1138716587', 'https://vimeo.com/1138603742',
+  'https://vimeo.com/1138613578', 'https://vimeo.com/1138613622', 'https://vimeo.com/1138613773',
+  'https://vimeo.com/1138613657', 'https://vimeo.com/1138613690', 'https://vimeo.com/1138613740',
+  'https://vimeo.com/1138716725', 'https://vimeo.com/1138716746', 'https://vimeo.com/1138716787',
+  'https://vimeo.com/1138716814', 'https://vimeo.com/1138716886', 'https://vimeo.com/1138716968',
+  'https://vimeo.com/1138716993', 'https://vimeo.com/1138717011', 'https://vimeo.com/1138717045',
+  'https://vimeo.com/1138717076', 'https://vimeo.com/1138717128', 'https://vimeo.com/1138716854',
+  'https://vimeo.com/1138717205', 'https://vimeo.com/1138717250', 'https://vimeo.com/1138717357',
+  'https://vimeo.com/1138716937', 'https://vimeo.com/1138717392', 'https://vimeo.com/1138717444',
+  'https://vimeo.com/1138717486', 'https://vimeo.com/1138717518', 'https://vimeo.com/1138717544'
 ];
+
+export const INITIAL_VIDEOS: Video[] = vimeoUrls.map((url, index) => ({
+  id: `v-${Date.now() + index}`,
+  url,
+  title: `Vimeo Video ${index + 1}`,
+  channel: 'Vimeo Creator',
+  thumbnailUrl: `https://picsum.photos/seed/vimeo${index}/400/800`,
+  duration: 'N/A',
+  type: 'video',
+  status: 'active',
+}));
+
 
 export const INITIAL_MISSIONS: Mission[] = [
     {

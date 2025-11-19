@@ -11,8 +11,6 @@ interface VideoPlayerProps {
   rewardAmount: number;
   rewardTimeSeconds: number;
   onVideoEnd: (videoId: string) => void;
-  isAudioUnlocked: boolean;
-  onUnlockAudio: () => void;
 }
 
 const parseDuration = (durationStr: string): number => {
@@ -44,10 +42,10 @@ const formatTime = (timeInSeconds: number): string => {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onToggleFavorite, rewardAmount, rewardTimeSeconds, onVideoEnd, isAudioUnlocked, onUnlockAudio }) => {
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onToggleFavorite, rewardAmount, rewardTimeSeconds, onVideoEnd }) => {
   const [progress, setProgress] = useState(0);
   const [isRewarded, setIsRewarded] = useState(false);
-  const [isMuted, setIsMuted] = useState(!isAudioUnlocked);
+  const [isMuted, setIsMuted] = useState(false);
   const [playerReady, setPlayerReady] = useState(false);
   
   const playerRef = useRef<HTMLDivElement>(null);
@@ -133,8 +131,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
 
   const handleToggleMute = useCallback(() => {
     setIsMuted(prev => !prev);
-    if (!isAudioUnlocked) onUnlockAudio();
-  }, [isAudioUnlocked, onUnlockAudio]);
+  }, []);
 
   const startRewardTimer = useCallback(() => {
     if (isRewarded || rewardTimeMs <= 0) return;
@@ -207,15 +204,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
           const videoId = match ? match[1] : null;
           if (videoId) return `https://www.dailymotion.com/embed/video/${videoId}?autoplay=1&mute=1&ui-logo=false&ui-start-screen-info=false&api=1`;
       }
-      // Kwai has no official JS API, so re-rendering on mute change is the fallback.
+      // Kwai has no official JS API, we start muted and user can unmute via native controls if available.
       if (videoItem.url.includes('kw.ai') || videoItem.url.includes('kuaishou.com')) {
           const kwaiRegex = /(?:video|short-video)\/([a-zA-Z0-9_-]+)/;
           const match = videoItem.url.match(kwaiRegex);
           const videoId = match ? match[1] : null;
-          if (videoId) return `https://www.kwai.com/embed/${videoId}?autoplay=1&mute=${isMuted ? 1 : 0}`;
+          if (videoId) return `https://www.kwai.com/embed/${videoId}?autoplay=1&mute=1`;
       }
       return null;
-  }, [isVimeo, isYoutube, isDailymotion, isMuted]);
+  }, [isVimeo, isYoutube, isDailymotion]);
 
   const embedUrl = getEmbedUrl(video);
   const rewardProgress = rewardTimeMs > 0 ? (progress / rewardTimeMs) * 100 : 100;

@@ -33,9 +33,6 @@ const App: React.FC = () => {
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-  // Global state to track if user has interacted with audio
-  const [isAudioUnlocked, setIsAudioUnlocked] = useState(false);
-
   // Data loading effect
   useEffect(() => {
     const loadData = async () => {
@@ -279,8 +276,6 @@ const App: React.FC = () => {
       onScrolledToNewVideo: handleScrolledToNewVideo,
       rewardAmount: settings!.rewardPerVideo,
       rewardTimeSeconds: settings!.minWatchTime,
-      isAudioUnlocked: isAudioUnlocked,
-      onUnlockAudio: () => setIsAudioUnlocked(true),
     };
 
     switch (activeView) {
