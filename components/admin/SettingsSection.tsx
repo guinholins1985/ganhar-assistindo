@@ -1,15 +1,18 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import Icon from '../Icon';
 import { AppSettings } from '../../types';
 
+type ShowToastFn = (message: string, type?: 'success' | 'error') => void;
+
 interface SettingsSectionProps {
     settings: AppSettings;
-    onUpdateSettings: (settings: AppSettings) => void;
+    onUpdateSettings: (settings: AppSettings) => Promise<void>;
+    showToast: ShowToastFn;
 }
 
-const SettingsSection: React.FC<SettingsSectionProps> = ({ settings, onUpdateSettings }) => {
+const SettingsSection: React.FC<SettingsSectionProps> = ({ settings, onUpdateSettings, showToast }) => {
     const [formData, setFormData] = useState<AppSettings>(settings);
-    const [showToast, setShowToast] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type } = e.target;
@@ -19,17 +22,10 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ settings, onUpdateSet
         }));
     };
     
-    const handleSave = () => {
-        onUpdateSettings(formData);
-        setShowToast(true);
+    const handleSave = async () => {
+        await onUpdateSettings(formData);
+        showToast('Configurações salvas com sucesso!', 'success');
     };
-
-    useEffect(() => {
-        if (showToast) {
-            const timer = setTimeout(() => setShowToast(false), 3000);
-            return () => clearTimeout(timer);
-        }
-    }, [showToast]);
 
     return (
         <div className="space-y-8">
@@ -153,17 +149,6 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ settings, onUpdateSet
                     <Icon name="check-circle" className="w-5 h-5 mr-2"/>
                     <span>Salvar Todas as Alterações</span>
                 </button>
-            </div>
-            
-            {/* Toast Notification */}
-            <div 
-                aria-live="assertive" 
-                className={`fixed bottom-8 right-8 z-50 transition-all duration-500 ease-in-out ${showToast ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}
-            >
-                <div className="flex items-center bg-green-600 text-white py-3 px-5 rounded-lg shadow-2xl">
-                    <Icon name="check-circle" className="w-6 h-6 mr-3"/>
-                    <span className="font-semibold">Configurações salvas com sucesso!</span>
-                </div>
             </div>
         </div>
     );

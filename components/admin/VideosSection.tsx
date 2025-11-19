@@ -1,33 +1,44 @@
+
 import React, { useState } from 'react';
 import { Video } from '../../types';
 import Icon from '../Icon';
 import AdminAddVideoModal from './AdminAddVideoModal';
 
+type ShowToastFn = (message: string, type?: 'success' | 'error') => void;
+
 interface VideosSectionProps {
     videos: Video[];
-    onUpdateVideo: (video: Video) => void;
-    onDeleteVideo: (videoId: string) => void;
-    onAddVideo: (url: string) => void;
+    onUpdateVideo: (video: Video) => Promise<void>;
+    onDeleteVideo: (videoId: string) => Promise<void>;
+    onAddVideo: (url: string) => Promise<string>;
+    showToast: ShowToastFn;
 }
 
-const VideosSection: React.FC<VideosSectionProps> = ({ videos, onUpdateVideo, onDeleteVideo, onAddVideo }) => {
+const VideosSection: React.FC<VideosSectionProps> = ({ videos, onUpdateVideo, onDeleteVideo, onAddVideo, showToast }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const toggleStatus = (video: Video) => {
+    const toggleStatus = async (video: Video) => {
         const newStatus = video.status === 'active' ? 'inactive' : 'active';
-        onUpdateVideo({ ...video, status: newStatus });
+        await onUpdateVideo({ ...video, status: newStatus });
+        showToast(`Status do vídeo "${video.title}" atualizado.`, 'success');
     };
 
-    const handleDelete = (video: Video) => {
+    const handleDelete = async (video: Video) => {
         if (window.confirm(`Você tem certeza que deseja excluir o vídeo "${video.title}"?`)) {
-            onDeleteVideo(video.id);
+            await onDeleteVideo(video.id);
+            showToast(`Vídeo "${video.title}" foi excluído.`, 'success');
         }
     };
     
-    const handleAddVideoSubmit = (url: string) => {
-        onAddVideo(url);
-        setIsModalOpen(false);
-        alert('Vídeo adicionado com sucesso!');
+    const handleAddVideoSubmit = async (url: string) => {
+        try {
+            const successMessage = await onAddVideo(url);
+            setIsModalOpen(false);
+            showToast(successMessage, 'success');
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro desconhecido.";
+            showToast(`Erro ao adicionar vídeo: ${errorMessage}`, 'error');
+        }
     };
 
 

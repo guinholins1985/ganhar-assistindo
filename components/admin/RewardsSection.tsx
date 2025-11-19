@@ -1,14 +1,23 @@
+
 import React from 'react';
 import { WithdrawalRequest } from '../../types';
 import Icon from '../Icon';
 
+type ShowToastFn = (message: string, type?: 'success' | 'error') => void;
+
 interface RewardsSectionProps {
     requests: WithdrawalRequest[];
-    onProcess: (requestId: string, status: 'approved' | 'declined') => void;
+    onProcess: (requestId: string, status: 'approved' | 'declined') => Promise<void>;
+    showToast: ShowToastFn;
 }
 
-const RewardsSection: React.FC<RewardsSectionProps> = ({ requests, onProcess }) => {
+const RewardsSection: React.FC<RewardsSectionProps> = ({ requests, onProcess, showToast }) => {
     const pendingRequests = requests.filter(r => r.status === 'pending');
+
+    const handleProcess = async (requestId: string, status: 'approved' | 'declined') => {
+        await onProcess(requestId, status);
+        showToast(`Solicitação foi ${status === 'approved' ? 'aprovada' : 'recusada'}.`, 'success');
+    };
 
     return (
         <div>
@@ -37,10 +46,10 @@ const RewardsSection: React.FC<RewardsSectionProps> = ({ requests, onProcess }) 
                                         <td className="p-3 hidden sm:table-cell text-gray-400">{req.requestDate.toLocaleDateString()}</td>
                                         <td className="p-3">
                                             <div className="flex justify-end space-x-2">
-                                                <button onClick={() => onProcess(req.id, 'approved')} className="bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-2 px-3 rounded-lg flex items-center">
+                                                <button onClick={() => handleProcess(req.id, 'approved')} className="bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-2 px-3 rounded-lg flex items-center">
                                                     <Icon name="check-circle" className="w-4 h-4 mr-1"/> Aprovar
                                                 </button>
-                                                <button onClick={() => onProcess(req.id, 'declined')} className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2 px-3 rounded-lg flex items-center">
+                                                <button onClick={() => handleProcess(req.id, 'declined')} className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2 px-3 rounded-lg flex items-center">
                                                     <Icon name="close" className="w-4 h-4 mr-1"/> Recusar
                                                 </button>
                                             </div>

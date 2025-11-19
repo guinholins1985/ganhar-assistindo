@@ -109,8 +109,8 @@ const App: React.FC = () => {
 
   }, [currentUser]);
   
-  const handleAddVideo = useCallback(async (url: string): Promise<void> => {
-    if (!settings) return;
+  const handleAddVideo = useCallback(async (url: string): Promise<string> => {
+    if (!settings) throw new Error("As configurações não foram carregadas.");
     let videoData: Partial<Video> | null = null;
     let errorOccurred = false;
 
@@ -139,8 +139,7 @@ const App: React.FC = () => {
                 duration: 'N/A',
             };
         } catch (e) {
-            alert("URL inválida. Por favor, insira um link válido.");
-            return;
+            throw new Error("URL inválida. Por favor, insira um link válido.");
         }
     }
 
@@ -162,11 +161,9 @@ const App: React.FC = () => {
     setVideos(prevVideos => [newVideo, ...prevVideos]);
     setNewlyAddedVideoId(newVideoId);
     setActiveModal(null);
-    if(errorOccurred) {
-        alert(`API indisponível. Vídeo genérico "${newVideo.title}" adicionado.`);
-    } else {
-        alert(`Vídeo "${newVideo.title}" adicionado com sucesso!`);
-    }
+    
+    const baseMessage = `Vídeo "${newVideo.title}" adicionado!`;
+    return errorOccurred ? `${baseMessage} (API indisponível, dados genéricos usados).` : baseMessage;
   }, [settings]);
 
   const handleRequestWithdrawal = useCallback(async (amount: number, pixKey: string) => {
@@ -254,10 +251,8 @@ const App: React.FC = () => {
   };
 
   const handleDeleteVideo = async (videoId: string) => {
-    const videoTitle = videos.find(v => v.id === videoId)?.title || 'O vídeo selecionado';
     await deleteVideo(videoId);
     setVideos(prevVideos => prevVideos.filter(v => v.id !== videoId));
-    alert(`O vídeo "${videoTitle}" foi excluído com sucesso!`);
   };
 
   const handleUpdateSettings = async (newSettings: AppSettings) => {

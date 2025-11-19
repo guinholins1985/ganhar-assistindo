@@ -1,14 +1,18 @@
+
 import React, { useState, useMemo } from 'react';
 import { User } from '../../types';
 import Icon from '../Icon';
 
+type ShowToastFn = (message: string, type?: 'success' | 'error') => void;
+
 interface UsersSectionProps {
     users: User[];
-    onUpdateUser: (user: User) => void;
-    onDeleteUser: (userId: string) => void;
+    onUpdateUser: (user: User) => Promise<void>;
+    onDeleteUser: (userId: string) => Promise<void>;
+    showToast: ShowToastFn;
 }
 
-const UsersSection: React.FC<UsersSectionProps> = ({ users, onUpdateUser, onDeleteUser }) => {
+const UsersSection: React.FC<UsersSectionProps> = ({ users, onUpdateUser, onDeleteUser, showToast }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState<'all' | 'active' | 'banned'>('all');
 
@@ -24,20 +28,23 @@ const UsersSection: React.FC<UsersSectionProps> = ({ users, onUpdateUser, onDele
             );
     }, [users, searchTerm, filter]);
 
-    const handleStatusChange = (user: User) => {
+    const handleStatusChange = async (user: User) => {
         const newStatus = user.status === 'active' ? 'banned' : 'active';
-        onUpdateUser({ ...user, status: newStatus });
+        await onUpdateUser({ ...user, status: newStatus });
+        showToast(`Status de ${user.name} atualizado.`, 'success');
     };
 
-    const handleResetBalance = (user: User) => {
+    const handleResetBalance = async (user: User) => {
         if(window.confirm(`Você tem certeza que deseja zerar o saldo de ${user.name}?`)) {
-            onUpdateUser({ ...user, balance: 0 });
+            await onUpdateUser({ ...user, balance: 0 });
+            showToast(`Saldo de ${user.name} zerado.`, 'success');
         }
     };
     
-    const handleDelete = (user: User) => {
+    const handleDelete = async (user: User) => {
         if(window.confirm(`ATENÇÃO: Esta ação é irreversível. Deseja realmente excluir o usuário ${user.name}?`)) {
-            onDeleteUser(user.id);
+            await onDeleteUser(user.id);
+            showToast(`Usuário ${user.name} foi excluído.`, 'success');
         }
     };
 

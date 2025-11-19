@@ -29,7 +29,6 @@ const parseDuration = (durationStr: string): number => {
 };
 
 const formatTime = (timeInSeconds: number): string => {
-    // FIX: Corrected typo from `timeInseconds` to `timeInSeconds`.
     if (isNaN(timeInSeconds) || timeInSeconds < 0) return '0:00';
     const totalSeconds = Math.floor(timeInSeconds);
     const hours = Math.floor(totalSeconds / 3600);
@@ -45,9 +44,12 @@ const formatTime = (timeInSeconds: number): string => {
 const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onToggleFavorite, rewardAmount, rewardTimeSeconds, onVideoEnd }) => {
   const [progress, setProgress] = useState(0);
   const [isRewarded, setIsRewarded] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const playerRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const rewardIntervalRef = useRef<number | null>(null);
   const isFavorite = user.favorites.includes(video.id);
+  const isVimeo = video.url.includes('vimeo.com');
 
   const [currentTime, setCurrentTime] = useState(0);
   const [totalDuration, setTotalDuration] = useState(0);
@@ -62,6 +64,21 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
     setIsRewarded(false);
     setProgress(0);
   }, [video.id, video.duration]);
+
+  // Effect to control Vimeo volume via postMessage when isMuted state changes.
+  // This is necessary because Vimeo's URL parameters are unreliable for unmuting
+  // an autoplaying video due to browser policies.
+  useEffect(() => {
+    if (isVimeo && iframeRef.current?.contentWindow) {
+      const volume = isMuted ? 0 : 1;
+      // After the user clicks the unmute button, we get permission to control audio.
+      // We send a message to the Vimeo player API to set the volume.
+      iframeRef.current.contentWindow.postMessage(
+        { method: 'setVolume', value: volume },
+        'https://player.vimeo.com'
+      );
+    }
+  }, [isMuted, isVimeo]);
 
   const startRewardTimer = useCallback(() => {
     if (isRewarded || rewardTimeMs <= 0) return;
@@ -139,61 +156,66 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
     };
   }, [playerRef, observerCallback, stopRewardTimer, stopPlaybackTimer]);
   
-  const getEmbedUrl = (videoItem: Video): string | null => {
+  const getEmbedUrl = (videoItem: Video, mutedState: boolean): string | null => {
       // YouTube
       if (videoItem.url.includes('youtube.com') || videoItem.url.includes('youtu.be')) {
+          const muteParam = mutedState ? 1 : 0;
           const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
           const match = videoItem.url.match(regExp);
           const videoId = (match && match[2].length === 11) ? match[2] : null;
           if (videoId) {
-              // Always embed the single video, ignore playlist parameters in the URL.
-              // The `&playlist=${videoId}` parameter makes the single video loop.
-              return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&iv_load_policy=3`;
+              return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${muteParam}&loop=1&playlist=${videoId}&controls=0&showinfo=0&iv_load_policy=3&playsinline=1`;
           }
       }
       // Vimeo
       if (videoItem.url.includes('vimeo.com')) {
           const videoIdMatch = videoItem.url.match(/vimeo.com\/(\d+)/);
           if (videoIdMatch) {
-              return `https://player.vimeo.com/video/${videoIdMatch[1]}?autoplay=1&muted=1&loop=1&autopause=0&background=1`;
+              // For Vimeo, we MUST start with muted=1 for autoplay to work.
+              // Unmuting will be handled via postMessage API, so the URL itself doesn't need to change.
+              return `https://player.vimeo.com/video/${videoIdMatch[1]}?autoplay=1&muted=1&loop=1&autopause=0&controls=0&api=1`;
           }
       }
       // Dailymotion
       if (videoItem.url.includes('dailymotion.com')) {
+          const muteParam = mutedState ? 1 : 0;
           const regex = /dailymotion.com\/(?:video|embed\/video)\/([^_?]+)/;
           const match = videoItem.url.match(regex);
           const videoId = match ? match[1] : null;
           if (videoId) {
-              return `https://www.dailymotion.com/embed/video/${videoId}?autoplay=1&mute=1&ui-logo=false&ui-start-screen-info=false`;
+              return `https://www.dailymotion.com/embed/video/${videoId}?autoplay=1&mute=${muteParam}&ui-logo=false&ui-start-screen-info=false`;
           }
       }
       // Kwai
       if (videoItem.url.includes('kw.ai') || videoItem.url.includes('kuaishou.com')) {
-          // Extracts video ID from formats like /video/ID or /short-video/ID
+          const muteParam = mutedState ? 1 : 0;
           const kwaiRegex = /(?:video|short-video)\/([a-zA-Z0-9_-]+)/;
           const match = videoItem.url.match(kwaiRegex);
           const videoId = match ? match[1] : null;
-          
           if (videoId) {
-              return `https://www.kwai.com/embed/${videoId}?autoplay=1&mute=1`;
+              return `https://www.kwai.com/embed/${videoId}?autoplay=1&mute=${muteParam}`;
           }
       }
       return null;
   };
 
-  const embedUrl = getEmbedUrl(video);
+  const embedUrl = getEmbedUrl(video, isMuted);
   const rewardProgress = rewardTimeMs > 0 ? (progress / rewardTimeMs) * 100 : 100;
 
   return (
     <div ref={playerRef} className="relative w-full h-full bg-black">
       {embedUrl ? (
         <iframe
+          ref={iframeRef}
           src={embedUrl}
           frameBorder="0"
           allow="autoplay; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
           className="w-full h-full object-cover"
           title={video.title}
+          // For Vimeo, key is stable to allow postMessage communication.
+          // For others, we change the key to force a reload with the new mute param in the URL.
+          key={isVimeo ? video.id : `${video.id}-${isMuted ? 'muted' : 'unmuted'}`}
         ></iframe>
       ) : (
         <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover" />
@@ -220,6 +242,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
       </div>
 
       <div className="absolute bottom-24 right-4 flex flex-col items-center space-y-6 z-10">
+        <button onClick={() => setIsMuted(prev => !prev)} className="flex flex-col items-center text-white">
+          <Icon name={isMuted ? 'volume-off' : 'volume-up'} className="w-8 h-8 drop-shadow-lg" />
+          <span className="text-xs mt-1 font-semibold">{isMuted ? 'Ativar Som' : 'Silenciar'}</span>
+        </button>
         <button onClick={() => onToggleFavorite(video.id)} className="flex flex-col items-center text-white">
           <Icon name={isFavorite ? 'heart-filled' : 'heart'} className="w-8 h-8 drop-shadow-lg" />
           <span className="text-xs mt-1 font-semibold">Like</span>
