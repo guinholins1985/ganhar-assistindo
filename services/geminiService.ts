@@ -1,10 +1,13 @@
+
 import { GoogleGenAI } from "@google/genai";
 import { Video } from '../types';
 
-export const getRecommendations = async (watchedVideos: Video[]): Promise<string> => {
+export const getRecommendations = async (watchedVideos: Video[], apiKey: string): Promise<string> => {
   try {
-    // FIX: Initialize GoogleGenAI with API_KEY from process.env directly as per guidelines.
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    if (!apiKey || apiKey.startsWith('••••')) {
+      return "A chave de API do Gemini não está configurada. Adicione-a no painel de administração.";
+    }
+    const ai = new GoogleGenAI({ apiKey });
 
     if (watchedVideos.length === 0) {
       return "You haven't watched any videos yet. Watch some videos and I'll give you personalized recommendations!";

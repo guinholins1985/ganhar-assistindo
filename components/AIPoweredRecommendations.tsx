@@ -6,9 +6,10 @@ import Icon from './Icon';
 
 interface AIPoweredRecommendationsProps {
   watchedVideos: Video[];
+  apiKey: string;
 }
 
-const AIPoweredRecommendations: React.FC<AIPoweredRecommendationsProps> = ({ watchedVideos }) => {
+const AIPoweredRecommendations: React.FC<AIPoweredRecommendationsProps> = ({ watchedVideos, apiKey }) => {
   const [recommendations, setRecommendations] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +19,7 @@ const AIPoweredRecommendations: React.FC<AIPoweredRecommendationsProps> = ({ wat
       setIsLoading(true);
       setError(null);
       try {
-        const result = await getRecommendations(watchedVideos);
+        const result = await getRecommendations(watchedVideos, apiKey);
         setRecommendations(result);
       } catch (err) {
         setError('Failed to fetch recommendations.');
@@ -29,8 +30,7 @@ const AIPoweredRecommendations: React.FC<AIPoweredRecommendationsProps> = ({ wat
     };
 
     fetchRecs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run only once when component mounts
+  }, [watchedVideos, apiKey]);
 
   return (
     <div className="pt-12 pb-24 px-4 h-full overflow-y-auto bg-gray-900">
