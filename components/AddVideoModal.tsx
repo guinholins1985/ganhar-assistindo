@@ -23,7 +23,7 @@ const AddVideoModal: React.FC<AddVideoModalProps> = ({ onClose, onAddVideo }) =>
           <Icon name="close" className="w-6 h-6" />
         </button>
         <h2 className="text-2xl font-bold mb-4">Add New Video</h2>
-        <p className="text-gray-400 mb-6">Paste a link from YouTube, Dailymotion, Kwai, Vimeo, etc. We'll automatically fetch video details when available.</p>
+        <p className="text-gray-400 mb-6">Paste a link from YouTube, Vimeo, Dailymotion, Kwai, etc. We'll automatically fetch video details when available.</p>
         <form onSubmit={handleSubmit}>
           <input
             type="url"

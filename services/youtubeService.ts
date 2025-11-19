@@ -113,6 +113,44 @@ export const fetchDailymotionVideoData = async (
     }
 };
 
+// Fetches video data from Vimeo oEmbed API
+export const fetchVimeoVideoData = async (
+    url: string
+): Promise<Partial<Video> | null> => {
+    const apiUrl = `https://vimeo.com/api/oembed.json?url=${encodeURIComponent(url)}`;
+
+    try {
+        const response = await fetch(apiUrl);
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Vimeo API Error:", response.status, errorText);
+            throw new Error(`Erro na API do Vimeo: ${response.statusText}`);
+        }
+        const data = await response.json();
+
+        const formatDuration = (totalSeconds: number) => {
+             if (isNaN(totalSeconds) || totalSeconds <= 0) return "N/A";
+             const hours = Math.floor(totalSeconds / 3600);
+             const minutes = Math.floor((totalSeconds % 3600) / 60);
+             const seconds = totalSeconds % 60;
+             if (hours > 0) {
+                 return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+             }
+             return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        return {
+            title: data.title,
+            channel: data.author_name,
+            thumbnailUrl: data.thumbnail_url,
+            duration: formatDuration(data.duration),
+        };
+    } catch (error) {
+        console.error("Failed to fetch Vimeo video data:", error);
+        throw error;
+    }
+};
+
 // Simulates fetching Kwai video data as there's no simple public API
 export const fetchKwaiVideoData = async (
     url: string

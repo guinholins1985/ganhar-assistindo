@@ -9,6 +9,7 @@ interface VideoPlayerProps {
   onToggleFavorite: (videoId: string) => void;
   rewardAmount: number;
   rewardTimeSeconds: number;
+  onVideoEnd: (videoId: string) => void;
 }
 
 const parseDuration = (durationStr: string): number => {
@@ -41,7 +42,7 @@ const formatTime = (timeInSeconds: number): string => {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onToggleFavorite, rewardAmount, rewardTimeSeconds }) => {
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onToggleFavorite, rewardAmount, rewardTimeSeconds, onVideoEnd }) => {
   const [progress, setProgress] = useState(0);
   const [isRewarded, setIsRewarded] = useState(false);
   const playerRef = useRef<HTMLDivElement>(null);
@@ -86,24 +87,26 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
     }
   }, []);
 
-  const startPlaybackTimer = useCallback(() => {
-    if (totalDuration <= 0 || playbackIntervalRef.current) return;
-    playbackIntervalRef.current = window.setInterval(() => {
-        setCurrentTime(prev => {
-            if (prev >= totalDuration -1) {
-                return 0; // Loop timer
-            }
-            return prev + 1;
-        });
-    }, 1000);
-  }, [totalDuration]);
-
   const stopPlaybackTimer = useCallback(() => {
       if (playbackIntervalRef.current) {
           clearInterval(playbackIntervalRef.current);
           playbackIntervalRef.current = null;
       }
   }, []);
+
+  const startPlaybackTimer = useCallback(() => {
+    if (totalDuration <= 0 || playbackIntervalRef.current) return;
+    playbackIntervalRef.current = window.setInterval(() => {
+        setCurrentTime(prev => {
+            if (prev >= totalDuration - 1) { // Video has ended
+                stopPlaybackTimer();
+                onVideoEnd(video.id);
+                return totalDuration; // Keep progress bar at 100% until scroll
+            }
+            return prev + 1;
+        });
+    }, 1000);
+  }, [totalDuration, stopPlaybackTimer, onVideoEnd, video.id]);
 
   const resetPlaybackTimer = useCallback(() => {
       stopPlaybackTimer();

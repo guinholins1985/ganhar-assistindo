@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { User, Video, Transaction, Mission, View, ModalType, WithdrawalRequest, AppSettings } from './types';
 import { INITIAL_MISSIONS } from './constants'; 
 import { initDB, getAllUsers, updateUser, deleteUser, getAllVideos, addVideo, updateVideo, deleteVideo, getAllTransactions, addTransaction, getAllWithdrawalRequests, addWithdrawalRequest, updateWithdrawalRequest, getSettings, updateSettings } from './services/dbService';
-import { fetchYouTubeVideoData, fetchDailymotionVideoData, fetchKwaiVideoData } from './services/youtubeService';
+import { fetchYouTubeVideoData, fetchDailymotionVideoData, fetchKwaiVideoData, fetchVimeoVideoData } from './services/youtubeService';
 import BottomNav from './components/BottomNav';
 import VideoFeed from './components/VideoFeed';
 import ProfilePage from './components/ProfilePage';
@@ -119,6 +119,8 @@ const App: React.FC = () => {
             videoData = await fetchYouTubeVideoData(url, settings.youtubeApiKey);
         } else if (url.includes('dailymotion.com')) {
             videoData = await fetchDailymotionVideoData(url);
+        } else if (url.includes('vimeo.com')) {
+            videoData = await fetchVimeoVideoData(url);
         } else if (url.includes('kw.ai') || url.includes('kuaishou.com')) {
             videoData = await fetchKwaiVideoData(url);
         }
