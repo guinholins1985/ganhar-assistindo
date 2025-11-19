@@ -2,53 +2,33 @@
 import { Video, Mission, User, WithdrawalRequest, AppSettings, Transaction } from './types';
 
 export const INITIAL_USERS: User[] = [
-  { id: 'u1', name: 'Alice', email: 'alice@example.com', avatarUrl: 'https://picsum.photos/seed/u1/100', balance: 1250.50, favorites: ['v1', 'v3'], status: 'active' },
-  { id: 'u2', name: 'Bob', email: 'bob@example.com', avatarUrl: 'https://picsum.photos/seed/u2/100', balance: 50.25, favorites: ['v2'], status: 'active' },
+  { id: 'u1', name: 'Alice', email: 'alice@example.com', avatarUrl: 'https://picsum.photos/seed/u1/100', balance: 1250.50, favorites: ['v3'], status: 'active' },
+  { id: 'u2', name: 'Bob', email: 'bob@example.com', avatarUrl: 'https://picsum.photos/seed/u2/100', balance: 50.25, favorites: [], status: 'active' },
   { id: 'u3', name: 'Charlie', email: 'charlie@example.com', avatarUrl: 'https://picsum.photos/seed/u3/100', balance: 0.00, favorites: [], status: 'banned' },
-  { id: 'u4', name: 'Diana', email: 'diana@example.com', avatarUrl: 'https://picsum.photos/seed/u4/100', balance: 532.10, favorites: ['v1','v2','v4'], status: 'active' },
+  { id: 'u4', name: 'Diana', email: 'diana@example.com', avatarUrl: 'https://picsum.photos/seed/u4/100', balance: 532.10, favorites: ['v3'], status: 'active' },
 ];
 
 export const INITIAL_VIDEOS: Video[] = [
   {
-    id: 'v1',
-    url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    title: 'Relaxing Nature Scenes',
-    channel: 'NatureVibes',
-    thumbnailUrl: 'https://picsum.photos/seed/v1/400/800',
-    duration: '10:32',
+    id: 'v-1721246400000',
+    url: 'https://vimeo.com/1138613690',
+    title: 'A DAY IN NY',
+    channel: 'Christin Naas',
+    thumbnailUrl: 'https://i.vimeocdn.com/video/1815124119-3f746d8995a004464c18c9855582236d396a927a3c301777b7fbf7c125bb909d-d_1280',
+    duration: '0:57',
     type: 'video',
     status: 'active',
   },
   {
-    id: 'v2',
-    url: 'https://www.youtube.com/watch?v=36YnV9STBqU',
-    title: 'Lo-fi Beats to Study/Relax to',
-    channel: 'ChillHop Music',
-    thumbnailUrl: 'https://picsum.photos/seed/v2/400/800',
-    duration: '1:24:15',
-    type: 'video',
-    status: 'active',
-  },
-  {
-    id: 'v3',
+    id: 'v-1721242800000',
     url: 'https://vimeo.com/253986711',
-    title: 'Amazing Drone Footage',
-    channel: 'DroneScapes',
-    thumbnailUrl: 'https://picsum.photos/seed/v3/400/800',
+    title: 'Stunning Iceland',
+    channel: 'Sverrir Thor',
+    thumbnailUrl: 'https://i.vimeocdn.com/video/682976495-75e8c3811867c4a4751f0857503b7082a5c92f7881f28b5f19082f6e9921f73e-d_640',
     duration: '4:18',
     type: 'video',
     status: 'active',
   },
-  {
-    id: 'v4',
-    url: 'https://www.youtube.com/playlist?list=PL4o29bINVT4EG_y-k5jGoOu3-Am8Nvi10',
-    title: 'Tech Gadgets 2024',
-    channel: 'TechReview',
-    thumbnailUrl: 'https://picsum.photos/seed/v4/400/800',
-    duration: 'Playlist',
-    type: 'playlist',
-    status: 'active',
-  }
 ];
 
 export const INITIAL_MISSIONS: Mission[] = [

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Video, User } from '../types';
 import Icon from './Icon';
 
@@ -10,6 +11,8 @@ interface VideoPlayerProps {
   rewardAmount: number;
   rewardTimeSeconds: number;
   onVideoEnd: (videoId: string) => void;
+  isAudioUnlocked: boolean;
+  onUnlockAudio: () => void;
 }
 
 const parseDuration = (durationStr: string): number => {
@@ -41,21 +44,32 @@ const formatTime = (timeInSeconds: number): string => {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onToggleFavorite, rewardAmount, rewardTimeSeconds, onVideoEnd }) => {
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onToggleFavorite, rewardAmount, rewardTimeSeconds, onVideoEnd, isAudioUnlocked, onUnlockAudio }) => {
   const [progress, setProgress] = useState(0);
   const [isRewarded, setIsRewarded] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(!isAudioUnlocked);
+  const [playerReady, setPlayerReady] = useState(false);
+  
   const playerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const rewardIntervalRef = useRef<number | null>(null);
   const isFavorite = user.favorites.includes(video.id);
-  const isVimeo = video.url.includes('vimeo.com');
-
+  
   const [currentTime, setCurrentTime] = useState(0);
   const [totalDuration, setTotalDuration] = useState(0);
   const playbackIntervalRef = useRef<number | null>(null);
   
   const rewardTimeMs = rewardTimeSeconds * 1000;
+
+  const isYoutube = useMemo(() => video.url.includes('youtube.com') || video.url.includes('youtu.be'), [video.url]);
+  const isVimeo = useMemo(() => video.url.includes('vimeo.com'), [video.url]);
+
+  const postMessageToPlayer = useCallback((message: any) => {
+    if (iframeRef.current?.contentWindow) {
+        const target = isYoutube ? 'https://www.youtube.com' : isVimeo ? 'https://player.vimeo.com' : '*';
+        iframeRef.current.contentWindow.postMessage(JSON.stringify(message), target);
+    }
+  }, [isYoutube, isVimeo]);
 
   useEffect(() => {
     const durationInSeconds = parseDuration(video.duration);
@@ -63,22 +77,52 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
     setCurrentTime(0);
     setIsRewarded(false);
     setProgress(0);
+    setPlayerReady(false); // Reset player ready state for new video
   }, [video.id, video.duration]);
 
-  // Effect to control Vimeo volume via postMessage when isMuted state changes.
-  // This is necessary because Vimeo's URL parameters are unreliable for unmuting
-  // an autoplaying video due to browser policies.
   useEffect(() => {
-    if (isVimeo && iframeRef.current?.contentWindow) {
-      const volume = isMuted ? 0 : 1;
-      // After the user clicks the unmute button, we get permission to control audio.
-      // We send a message to the Vimeo player API to set the volume.
-      iframeRef.current.contentWindow.postMessage(
-        { method: 'setVolume', value: volume },
-        'https://player.vimeo.com'
-      );
+    const handlePlayerMessage = (event: MessageEvent) => {
+        if (event.origin !== 'https://www.youtube.com' && event.origin !== 'https://player.vimeo.com') {
+            return;
+        }
+        let data;
+        try {
+            data = JSON.parse(event.data);
+        } catch (e) { return; }
+
+        if (isYoutube && data.event === 'onReady') {
+            setPlayerReady(true);
+        }
+        if (isVimeo && data.event === 'ready') {
+            postMessageToPlayer({ method: 'addEventListener', value: 'play' });
+            postMessageToPlayer({ method: 'addEventListener', value: 'pause' });
+            setPlayerReady(true);
+        }
+    };
+    window.addEventListener('message', handlePlayerMessage);
+    return () => window.removeEventListener('message', handlePlayerMessage);
+  }, [isYoutube, isVimeo, postMessageToPlayer]);
+
+  useEffect(() => {
+    // Send commands only when player is ready and intersecting
+    if (playerReady) {
+        if (isYoutube) {
+            const muteFunc = isMuted ? 'mute' : 'unMute';
+            postMessageToPlayer({ event: 'command', func: muteFunc, args: '' });
+        }
+        if (isVimeo) {
+            const volume = isMuted ? 0 : 1;
+            postMessageToPlayer({ method: 'setVolume', value: volume });
+        }
     }
-  }, [isMuted, isVimeo]);
+  }, [playerReady, isMuted, isYoutube, isVimeo, postMessageToPlayer]);
+
+  const handleToggleMute = useCallback(() => {
+    setIsMuted(prev => !prev);
+    if (!isAudioUnlocked) {
+      onUnlockAudio();
+    }
+  }, [isAudioUnlocked, onUnlockAudio]);
 
   const startRewardTimer = useCallback(() => {
     if (isRewarded || rewardTimeMs <= 0) return;
@@ -115,10 +159,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
     if (totalDuration <= 0 || playbackIntervalRef.current) return;
     playbackIntervalRef.current = window.setInterval(() => {
         setCurrentTime(prev => {
-            if (prev >= totalDuration - 1) { // Video has ended
+            if (prev >= totalDuration - 1) {
                 stopPlaybackTimer();
                 onVideoEnd(video.id);
-                return totalDuration; // Keep progress bar at 100% until scroll
+                return totalDuration;
             }
             return prev + 1;
         });
@@ -132,14 +176,21 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
 
   const observerCallback = useCallback(([entry]: IntersectionObserverEntry[]) => {
       if (entry.isIntersecting) {
+        if(playerReady) {
+            if (isYoutube) postMessageToPlayer({ event: 'command', func: 'playVideo', args: '' });
+            if (isVimeo) postMessageToPlayer({ method: 'play' });
+        }
         startRewardTimer();
         startPlaybackTimer();
       } else {
+        if(playerReady) {
+            if (isYoutube) postMessageToPlayer({ event: 'command', func: 'pauseVideo', args: '' });
+            if (isVimeo) postMessageToPlayer({ method: 'pause' });
+        }
         stopRewardTimer();
         resetPlaybackTimer();
       }
-    }, [startRewardTimer, stopRewardTimer, startPlaybackTimer, resetPlaybackTimer]
-  );
+    }, [startRewardTimer, stopRewardTimer, startPlaybackTimer, resetPlaybackTimer, playerReady, isYoutube, isVimeo, postMessageToPlayer]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(observerCallback, { threshold: 0.8 });
@@ -156,29 +207,24 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
     };
   }, [playerRef, observerCallback, stopRewardTimer, stopPlaybackTimer]);
   
-  const getEmbedUrl = (videoItem: Video, mutedState: boolean): string | null => {
-      // YouTube
-      if (videoItem.url.includes('youtube.com') || videoItem.url.includes('youtu.be')) {
-          const muteParam = mutedState ? 1 : 0;
+  const getEmbedUrl = useCallback((videoItem: Video): string | null => {
+      const origin = `${window.location.protocol}//${window.location.host}`;
+      if (isYoutube) {
           const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
           const match = videoItem.url.match(regExp);
           const videoId = (match && match[2].length === 11) ? match[2] : null;
           if (videoId) {
-              return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${muteParam}&loop=1&playlist=${videoId}&controls=0&showinfo=0&iv_load_policy=3&playsinline=1`;
+              return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&iv_load_policy=3&playsinline=1&enablejsapi=1&origin=${origin}`;
           }
       }
-      // Vimeo
-      if (videoItem.url.includes('vimeo.com')) {
+      if (isVimeo) {
           const videoIdMatch = videoItem.url.match(/vimeo.com\/(\d+)/);
           if (videoIdMatch) {
-              // For Vimeo, we MUST start with muted=1 for autoplay to work.
-              // Unmuting will be handled via postMessage API, so the URL itself doesn't need to change.
               return `https://player.vimeo.com/video/${videoIdMatch[1]}?autoplay=1&muted=1&loop=1&autopause=0&controls=0&api=1`;
           }
       }
-      // Dailymotion
       if (videoItem.url.includes('dailymotion.com')) {
-          const muteParam = mutedState ? 1 : 0;
+          const muteParam = isMuted ? 1 : 0;
           const regex = /dailymotion.com\/(?:video|embed\/video)\/([^_?]+)/;
           const match = videoItem.url.match(regex);
           const videoId = match ? match[1] : null;
@@ -186,9 +232,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
               return `https://www.dailymotion.com/embed/video/${videoId}?autoplay=1&mute=${muteParam}&ui-logo=false&ui-start-screen-info=false`;
           }
       }
-      // Kwai
       if (videoItem.url.includes('kw.ai') || videoItem.url.includes('kuaishou.com')) {
-          const muteParam = mutedState ? 1 : 0;
+          const muteParam = isMuted ? 1 : 0;
           const kwaiRegex = /(?:video|short-video)\/([a-zA-Z0-9_-]+)/;
           const match = videoItem.url.match(kwaiRegex);
           const videoId = match ? match[1] : null;
@@ -197,9 +242,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
           }
       }
       return null;
-  };
+  }, [isVimeo, isYoutube, isMuted]);
 
-  const embedUrl = getEmbedUrl(video, isMuted);
+  const embedUrl = getEmbedUrl(video);
   const rewardProgress = rewardTimeMs > 0 ? (progress / rewardTimeMs) * 100 : 100;
 
   return (
@@ -213,9 +258,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
           allowFullScreen
           className="w-full h-full object-cover"
           title={video.title}
-          // For Vimeo, key is stable to allow postMessage communication.
-          // For others, we change the key to force a reload with the new mute param in the URL.
-          key={isVimeo ? video.id : `${video.id}-${isMuted ? 'muted' : 'unmuted'}`}
+          key={isYoutube || isVimeo ? video.id : `${video.id}-${isMuted}`}
         ></iframe>
       ) : (
         <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover" />
@@ -242,7 +285,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
       </div>
 
       <div className="absolute bottom-24 right-4 flex flex-col items-center space-y-6 z-10">
-        <button onClick={() => setIsMuted(prev => !prev)} className="flex flex-col items-center text-white">
+        <button onClick={handleToggleMute} className="flex flex-col items-center text-white">
           <Icon name={isMuted ? 'volume-off' : 'volume-up'} className="w-8 h-8 drop-shadow-lg" />
           <span className="text-xs mt-1 font-semibold">{isMuted ? 'Ativar Som' : 'Silenciar'}</span>
         </button>
