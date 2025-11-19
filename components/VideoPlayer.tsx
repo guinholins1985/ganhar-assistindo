@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Video, User } from '../types';
 import Icon from './Icon';
@@ -11,21 +10,16 @@ interface VideoPlayerProps {
   rewardAmount: number;
   rewardTimeSeconds: number;
   onVideoEnd: (videoId: string) => void;
+  loadState: 'active' | 'preload' | 'lazy';
 }
 
 const parseDuration = (durationStr: string): number => {
-    if (!durationStr || ['N/A', 'Playlist'].includes(durationStr)) {
-        return 0;
-    }
+    if (!durationStr || ['N/A', 'Playlist'].includes(durationStr)) return 0;
     const parts = durationStr.split(':').map(Number);
     let seconds = 0;
-    if (parts.length === 3) { // HH:MM:SS
-        seconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
-    } else if (parts.length === 2) { // MM:SS
-        seconds = parts[0] * 60 + parts[1];
-    } else if (parts.length === 1) { // SS
-        seconds = parts[0];
-    }
+    if (parts.length === 3) seconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
+    else if (parts.length === 2) seconds = parts[0] * 60 + parts[1];
+    else if (parts.length === 1) seconds = parts[0];
     return isNaN(seconds) ? 0 : seconds;
 };
 
@@ -36,186 +30,158 @@ const formatTime = (timeInSeconds: number): string => {
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
 
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    }
+    if (hours > 0) return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onToggleFavorite, rewardAmount, rewardTimeSeconds, onVideoEnd }) => {
-  const [progress, setProgress] = useState(0);
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onToggleFavorite, rewardAmount, rewardTimeSeconds, onVideoEnd, loadState }) => {
   const [isRewarded, setIsRewarded] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [playerReady, setPlayerReady] = useState(false);
-  
-  const playerRef = useRef<HTMLDivElement>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const rewardIntervalRef = useRef<number | null>(null);
-  const isFavorite = user.favorites.includes(video.id);
-  
   const [currentTime, setCurrentTime] = useState(0);
   const [totalDuration, setTotalDuration] = useState(0);
   
-  const rewardTimeMs = rewardTimeSeconds * 1000;
-
+  const playerRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const youtubeTimeIntervalRef = useRef<number | null>(null);
+  const isFavorite = user.favorites.includes(video.id);
+  
   const isYoutube = useMemo(() => video.url.includes('youtube.com') || video.url.includes('youtu.be'), [video.url]);
   const isVimeo = useMemo(() => video.url.includes('vimeo.com'), [video.url]);
   const isDailymotion = useMemo(() => video.url.includes('dailymotion.com'), [video.url]);
 
   const postMessageToPlayer = useCallback((message: any) => {
     if (iframeRef.current?.contentWindow) {
-        let target = '*';
-        if (isYoutube) target = 'https://www.youtube.com';
-        else if (isVimeo) target = 'https://player.vimeo.com';
-        else if (isDailymotion) target = 'https://www.dailymotion.com';
-        
-        const payload = isYoutube ? JSON.stringify(message) : message;
+        const target = isYoutube ? 'https://www.youtube.com' : isVimeo ? 'https://player.vimeo.com' : isDailymotion ? 'https://www.dailymotion.com' : '*';
+        const payload = typeof message === 'object' ? JSON.stringify(message) : message;
         iframeRef.current.contentWindow.postMessage(payload, target);
     }
   }, [isYoutube, isVimeo, isDailymotion]);
 
   useEffect(() => {
-    const durationInSeconds = parseDuration(video.duration);
-    setTotalDuration(durationInSeconds);
+    setTotalDuration(parseDuration(video.duration));
     setCurrentTime(0);
     setIsRewarded(false);
-    setProgress(0);
     setPlayerReady(false);
   }, [video.id, video.duration]);
 
   useEffect(() => {
-    const handlePlayerMessage = (event: MessageEvent) => {
-        let data = event.data;
-        if (typeof data === 'string') {
-            try { data = JSON.parse(data); } catch (e) { return; }
-        }
-        if (!data || !data.event) return;
+    if (isRewarded || rewardTimeSeconds <= 0) return;
+    if (currentTime >= rewardTimeSeconds) {
+      onAddReward(video.id, rewardAmount);
+      setIsRewarded(true);
+    }
+  }, [currentTime, isRewarded, rewardTimeSeconds, onAddReward, video.id, rewardAmount]);
 
-        // Ready events
-        if ((isYoutube && data.event === 'onReady') || (isVimeo && data.event === 'ready') || (isDailymotion && data.event === 'ready')) {
+  useEffect(() => {
+    const handlePlayerMessage = (event: MessageEvent) => {
+        if (!event.source || event.source !== iframeRef.current?.contentWindow) return;
+        let data = event.data;
+        if (typeof data === 'string') try { data = JSON.parse(data); } catch (e) { /* Not JSON, handle as string */ }
+        
+        const eventName = data.event || (typeof event.data === 'string' ? event.data.split('=')[0] : null);
+
+        if (['onReady', 'ready'].includes(eventName)) {
             setPlayerReady(true);
-            if(isVimeo) {
+            if (isVimeo) {
                 postMessageToPlayer({ method: 'addEventListener', value: 'timeupdate' });
                 postMessageToPlayer({ method: 'addEventListener', value: 'finish' });
+                postMessageToPlayer({ method: 'getDuration' });
             }
-            if(isDailymotion) {
-                postMessageToPlayer('addEventListener', 'timeupdate');
-                postMessageToPlayer('addEventListener', 'end');
+            if (isDailymotion) {
+                postMessageToPlayer('addEventListener=timeupdate');
+                postMessageToPlayer('addEventListener=end');
+                postMessageToPlayer('duration');
             }
-            if(isYoutube) {
-                postMessageToPlayer({ event: 'command', func: 'addEventListener', args: ['onStateChange'] });
+            if (isYoutube) {
+                if (youtubeTimeIntervalRef.current) clearInterval(youtubeTimeIntervalRef.current);
+                youtubeTimeIntervalRef.current = window.setInterval(() => {
+                    postMessageToPlayer({ event: 'command', func: 'getCurrentTime', args: '' });
+                    postMessageToPlayer({ event: 'command', func: 'getDuration', args: '' });
+                }, 500);
             }
         }
         
-        // Time updates
-        if (isVimeo && data.event === 'timeupdate') setCurrentTime(data.data.seconds);
-        if (isDailymotion && data.event === 'timeupdate') setCurrentTime(data.time);
-        
-        // State changes and end events
-        if (isYoutube && data.event === 'onStateChange' && data.info?.playerState === 0) onVideoEnd(video.id);
-        if (isVimeo && data.event === 'finish') onVideoEnd(video.id);
-        if (isDailymotion && data.event === 'end') onVideoEnd(video.id);
+        if (isYoutube && eventName === 'infoDelivery') {
+            if (data.info?.currentTime) setCurrentTime(data.info.currentTime);
+            if (data.info?.duration) setTotalDuration(data.info.duration);
+        }
+        if (isVimeo) {
+            if (eventName === 'timeupdate') setCurrentTime(data.data.seconds);
+            if (data.method === 'getDuration') setTotalDuration(data.value);
+            if (eventName === 'finish') onVideoEnd(video.id);
+        }
+        if (isDailymotion) {
+            if (eventName === 'timeupdate') setCurrentTime(parseFloat(event.data.split('=')[1]));
+            if (eventName === 'duration') setTotalDuration(parseFloat(event.data.split('=')[1]));
+            if (eventName === 'end') onVideoEnd(video.id);
+        }
+        if (isYoutube && eventName === 'onStateChange' && data.info?.playerState === 0) onVideoEnd(video.id);
     };
 
     window.addEventListener('message', handlePlayerMessage);
-    return () => window.removeEventListener('message', handlePlayerMessage);
+    return () => {
+      window.removeEventListener('message', handlePlayerMessage);
+      if (youtubeTimeIntervalRef.current) clearInterval(youtubeTimeIntervalRef.current);
+    };
   }, [isYoutube, isVimeo, isDailymotion, postMessageToPlayer, onVideoEnd, video.id]);
 
   useEffect(() => {
     if (playerReady) {
         if (isYoutube) postMessageToPlayer({ event: 'command', func: isMuted ? 'mute' : 'unMute', args: '' });
         if (isVimeo) postMessageToPlayer({ method: 'setVolume', value: isMuted ? 0 : 1 });
-        if (isDailymotion) postMessageToPlayer({ method: 'volume', value: isMuted ? 0 : 1 });
+        if (isDailymotion) postMessageToPlayer(isMuted ? 'volume=0' : 'volume=1');
     }
   }, [playerReady, isMuted, isYoutube, isVimeo, isDailymotion, postMessageToPlayer]);
 
-  const handleToggleMute = useCallback(() => {
-    setIsMuted(prev => !prev);
-  }, []);
-
-  const startRewardTimer = useCallback(() => {
-    if (isRewarded || rewardTimeMs <= 0) return;
-    if (rewardIntervalRef.current) clearInterval(rewardIntervalRef.current);
-    rewardIntervalRef.current = window.setInterval(() => {
-      setProgress(prev => {
-        const newProgress = prev + 100;
-        if (newProgress >= rewardTimeMs) {
-          if (rewardIntervalRef.current) clearInterval(rewardIntervalRef.current);
-          onAddReward(video.id, rewardAmount);
-          setIsRewarded(true);
-          return rewardTimeMs;
-        }
-        return newProgress;
-      });
-    }, 100);
-  }, [isRewarded, onAddReward, video.id, rewardAmount, rewardTimeMs]);
-
-  const stopRewardTimer = useCallback(() => {
-    if (rewardIntervalRef.current) {
-      clearInterval(rewardIntervalRef.current);
-      rewardIntervalRef.current = null;
-    }
-  }, []);
-
   const observerCallback = useCallback(([entry]: IntersectionObserverEntry[]) => {
-      if (entry.isIntersecting) {
-        if(playerReady) {
-            if (isYoutube) postMessageToPlayer({ event: 'command', func: 'playVideo', args: '' });
-            if (isVimeo) postMessageToPlayer({ method: 'play' });
-            if (isDailymotion) postMessageToPlayer('play');
-        }
-        startRewardTimer();
-      } else {
-        if(playerReady) {
-            if (isYoutube) postMessageToPlayer({ event: 'command', func: 'pauseVideo', args: '' });
-            if (isVimeo) postMessageToPlayer({ method: 'pause' });
-            if (isDailymotion) postMessageToPlayer('pause');
-        }
-        stopRewardTimer();
-        setCurrentTime(0); // Reset time when out of view
+      const shouldPlay = entry.isIntersecting && loadState === 'active';
+      if (playerReady) {
+          const command = shouldPlay ? 'play' : 'pause';
+          if (isYoutube) postMessageToPlayer({ event: 'command', func: `${command}Video`, args: '' });
+          if (isVimeo) postMessageToPlayer({ method: command });
+          if (isDailymotion) postMessageToPlayer(command);
       }
-    }, [startRewardTimer, stopRewardTimer, playerReady, isYoutube, isVimeo, isDailymotion, postMessageToPlayer]);
+    }, [playerReady, isYoutube, isVimeo, isDailymotion, postMessageToPlayer, loadState]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(observerCallback, { threshold: 0.8 });
     const currentRef = playerRef.current;
     if (currentRef) observer.observe(currentRef);
-    return () => {
-      if (currentRef) observer.unobserve(currentRef);
-      stopRewardTimer();
-    };
-  }, [playerRef, observerCallback, stopRewardTimer]);
+    return () => { if (currentRef) observer.unobserve(currentRef); };
+  }, [playerRef, observerCallback]);
   
   const getEmbedUrl = useCallback((videoItem: Video): string | null => {
       const origin = `${window.location.protocol}//${window.location.host}`;
       if (isYoutube) {
-          const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-          const match = videoItem.url.match(regExp);
-          const videoId = (match && match[2].length === 11) ? match[2] : null;
-          if (videoId) return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&iv_load_policy=3&playsinline=1&enablejsapi=1&origin=${origin}`;
+          const videoId = videoItem.url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/)?.pop();
+          if (videoId?.length === 11) return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&iv_load_policy=3&playsinline=1&enablejsapi=1&origin=${origin}`;
       }
       if (isVimeo) {
-          const videoIdMatch = videoItem.url.match(/vimeo.com\/(\d+)/);
-          if (videoIdMatch) return `https://player.vimeo.com/video/${videoIdMatch[1]}?autoplay=1&muted=1&loop=1&autopause=0&controls=0&api=1`;
+          const videoId = videoItem.url.match(/vimeo.com\/(\d+)/)?.pop();
+          if (videoId) return `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=1&loop=1&autopause=0&controls=0&api=1`;
       }
       if (isDailymotion) {
-          const regex = /dailymotion.com\/(?:video|embed\/video)\/([^_?]+)/;
-          const match = videoItem.url.match(regex);
-          const videoId = match ? match[1] : null;
-          if (videoId) return `https://www.dailymotion.com/embed/video/${videoId}?autoplay=1&mute=1&ui-logo=false&ui-start-screen-info=false&api=1`;
+          const videoId = videoItem.url.match(/dailymotion.com\/(?:video|embed\/video)\/([^_?]+)/)?.pop();
+          if (videoId) return `https://www.dailymotion.com/embed/video/${videoId}?autoplay=1&mute=1&ui-logo=false&ui-start-screen-info=false&api=1&origin=${origin}`;
       }
-      // Kwai has no official JS API, we start muted and user can unmute via native controls if available.
       if (videoItem.url.includes('kw.ai') || videoItem.url.includes('kuaishou.com')) {
-          const kwaiRegex = /(?:video|short-video)\/([a-zA-Z0-9_-]+)/;
-          const match = videoItem.url.match(kwaiRegex);
-          const videoId = match ? match[1] : null;
+          const videoId = videoItem.url.match(/(?:video|short-video)\/([a-zA-Z0-9_-]+)/)?.pop();
           if (videoId) return `https://www.kwai.com/embed/${videoId}?autoplay=1&mute=1`;
       }
       return null;
   }, [isVimeo, isYoutube, isDailymotion]);
 
+  if (loadState === 'lazy') {
+    return (
+      <div className="w-full h-full bg-black">
+        <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover" loading="lazy" />
+      </div>
+    );
+  }
+
   const embedUrl = getEmbedUrl(video);
-  const rewardProgress = rewardTimeMs > 0 ? (progress / rewardTimeMs) * 100 : 100;
+  const rewardProgress = rewardTimeSeconds > 0 ? (Math.min(currentTime, rewardTimeSeconds) / rewardTimeSeconds) * 100 : 0;
 
   return (
     <div ref={playerRef} className="relative w-full h-full bg-black">
@@ -234,7 +200,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
         <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover" />
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 pointer-events-none"></div>
-
       <div className="absolute bottom-20 left-4 right-20 text-white z-10 space-y-3">
         <div>
             <h3 className="font-bold text-lg shadow-black [text-shadow:1px_1px_2px_var(--tw-shadow-color)]">{video.title}</h3>
@@ -246,16 +211,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
                 <div className="flex-grow bg-white/20 h-1.5 rounded-full">
                     <div 
                         className="bg-white h-1.5 rounded-full"
-                        style={{ width: `${(currentTime / totalDuration) * 100}%`, transition: 'width 0.2s linear' }}
+                        style={{ width: `${totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0}%` }}
                     ></div>
                 </div>
                 <span>{formatTime(totalDuration)}</span>
             </div>
         )}
       </div>
-
       <div className="absolute bottom-24 right-4 flex flex-col items-center space-y-6 z-10">
-        <button onClick={handleToggleMute} className="flex flex-col items-center text-white">
+        <button onClick={() => setIsMuted(p => !p)} className="flex flex-col items-center text-white">
           <Icon name={isMuted ? 'volume-off' : 'volume-up'} className="w-8 h-8 drop-shadow-lg" />
           <span className="text-xs mt-1 font-semibold">{isMuted ? 'Ativar Som' : 'Silenciar'}</span>
         </button>
@@ -271,8 +235,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
           <Icon name="share" className="w-8 h-8 drop-shadow-lg" />
           <span className="text-xs mt-1 font-semibold">Share</span>
         </button>
-        
-        {/* Reward Timer */}
         <div className="relative w-12 h-12 flex items-center justify-center">
             <svg className="w-full h-full transform -rotate-90">
                 <circle className="text-gray-600/50" strokeWidth="4" stroke="currentColor" fill="transparent" r="20" cx="24" cy="24" />
