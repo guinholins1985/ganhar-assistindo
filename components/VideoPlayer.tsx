@@ -88,7 +88,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
         width="100%"
         height="100%"
         playsinline
-        loop
         config={{
           youtube: { playerVars: { controls: 0, showinfo: 0, iv_load_policy: 3, modestbranding: 1 } },
           vimeo: { playerOptions: { controls: false, autopause: false } },
