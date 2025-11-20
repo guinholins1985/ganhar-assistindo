@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { User, Video, Transaction, Mission, View, ModalType, WithdrawalRequest, AppSettings } from './types';
 import { INITIAL_MISSIONS } from './constants'; 
@@ -73,6 +74,17 @@ const App: React.FC = () => {
   
   const handleStartSession = useCallback(() => {
     setIsSessionStarted(true);
+
+    // This is the crucial fix: Play a silent audio track on the first user interaction.
+    // This satisfies browser autoplay policies and "unlocks" the audio context for the page,
+    // allowing subsequent videos to play with sound automatically.
+    const audioEl = document.getElementById('audio-unlock') as HTMLAudioElement;
+    if (audioEl) {
+        audioEl.play().catch(e => {
+            console.warn("Audio context could not be unlocked automatically.", e);
+        });
+    }
+
     setIsAudioUnlocked(true); // Unlock audio for the entire session
   }, []);
 

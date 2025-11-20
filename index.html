@@ -78,6 +78,12 @@
 </head>
   <body class="bg-base-100">
     <div id="root"></div>
+    <!-- Silent audio element to unlock audio context on user interaction -->
+    <audio 
+      id="audio-unlock" 
+      src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"
+      style="display: none;"
+    ></audio>
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>
