@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>VideoRewards AI</title>
     
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
     <link rel="preconnect" href="https://www.youtube.com">
     <link rel="preconnect" href="https://player.vimeo.com">
     <link rel="preconnect" href="https://www.dailymotion.com">
@@ -13,9 +17,48 @@
     <link rel="preconnect" href="https://picsum.photos">
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            },
+            colors: {
+              primary: {
+                DEFAULT: '#8B5CF6',
+                light: '#A78BFA',
+                dark: '#7C3AED',
+              },
+              secondary: '#1F2937',
+              accent: '#C4B5FD',
+              'base-100': '#000000',
+              'base-200': '#111827',
+              'base-300': '#1F2937',
+              'base-content': '#F9FAFB',
+            }
+          }
+        }
+      }
+    </script>
     <style>
       body {
         overscroll-behavior: none;
+        font-family: 'Inter', sans-serif;
+      }
+      /* Custom scrollbar for a modern look */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #111827;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #7C3AED;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #8B5CF6;
       }
     </style>
   <script type="importmap">
@@ -33,7 +76,7 @@
 }
 </script>
 </head>
-  <body>
+  <body class="bg-base-100">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

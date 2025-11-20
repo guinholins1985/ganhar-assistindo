@@ -29,7 +29,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ settings, onUpdateSet
 
     return (
         <div className="space-y-8">
-            <div className="bg-gray-800 rounded-lg p-6">
+            <div className="bg-base-200 rounded-lg p-6">
                 <h3 className="text-xl font-semibold mb-4 text-white">Informações do App</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
@@ -39,7 +39,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ settings, onUpdateSet
                             name="appName"
                             value={formData.appName}
                             onChange={handleChange}
-                            className="w-full bg-gray-700 text-white p-2 rounded-lg border border-gray-600" 
+                            className="w-full bg-base-300 text-white p-2 rounded-lg border border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none" 
                         />
                     </div>
                     <div>
@@ -49,13 +49,13 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ settings, onUpdateSet
                             name="logoUrl"
                             value={formData.logoUrl}
                             onChange={handleChange}
-                            className="w-full bg-gray-700 text-white p-2 rounded-lg border border-gray-600" 
+                            className="w-full bg-base-300 text-white p-2 rounded-lg border border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none" 
                         />
                     </div>
                 </div>
             </div>
             
-            <div className="bg-gray-800 rounded-lg p-6">
+            <div className="bg-base-200 rounded-lg p-6">
                 <h3 className="text-xl font-semibold mb-4 text-white">Chaves de API</h3>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
@@ -65,7 +65,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ settings, onUpdateSet
                             name="geminiApiKey"
                             value={formData.geminiApiKey}
                             onChange={handleChange}
-                            className="w-full bg-gray-700 text-white p-2 rounded-lg border border-gray-600" 
+                            className="w-full bg-base-300 text-white p-2 rounded-lg border border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none" 
                         />
                     </div>
                     <div>
@@ -75,13 +75,13 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ settings, onUpdateSet
                             name="youtubeApiKey"
                             value={formData.youtubeApiKey}
                             onChange={handleChange}
-                            className="w-full bg-gray-700 text-white p-2 rounded-lg border border-gray-600" 
+                            className="w-full bg-base-300 text-white p-2 rounded-lg border border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none" 
                         />
                     </div>
                 </div>
             </div>
 
-            <div className="bg-gray-800 rounded-lg p-6">
+            <div className="bg-base-200 rounded-lg p-6">
                 <h3 className="text-xl font-semibold mb-4 text-white">Configurações de Recompensa</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
@@ -92,7 +92,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ settings, onUpdateSet
                             value={formData.rewardPerVideo}
                             onChange={handleChange}
                             step="0.01"
-                            className="w-full bg-gray-700 text-white p-2 rounded-lg border border-gray-600" 
+                            className="w-full bg-base-300 text-white p-2 rounded-lg border border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none" 
                         />
                     </div>
                     <div>
@@ -102,13 +102,13 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ settings, onUpdateSet
                             name="minWatchTime"
                             value={formData.minWatchTime}
                             onChange={handleChange}
-                            className="w-full bg-gray-700 text-white p-2 rounded-lg border border-gray-600" 
+                            className="w-full bg-base-300 text-white p-2 rounded-lg border border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none" 
                         />
                     </div>
                 </div>
             </div>
 
-            <div className="bg-gray-800 rounded-lg p-6">
+            <div className="bg-base-200 rounded-lg p-6">
                 <h3 className="text-xl font-semibold mb-4 text-white">Limites de Saque</h3>
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
@@ -118,7 +118,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ settings, onUpdateSet
                             name="minWithdrawal"
                             value={formData.minWithdrawal}
                             onChange={handleChange}
-                            className="w-full bg-gray-700 text-white p-2 rounded-lg border border-gray-600" 
+                            className="w-full bg-base-300 text-white p-2 rounded-lg border border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none" 
                         />
                     </div>
                     <div>
@@ -128,7 +128,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ settings, onUpdateSet
                             name="maxDailyWithdrawalUser"
                             value={formData.maxDailyWithdrawalUser}
                             onChange={handleChange}
-                            className="w-full bg-gray-700 text-white p-2 rounded-lg border border-gray-600" 
+                            className="w-full bg-base-300 text-white p-2 rounded-lg border border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none" 
                         />
                     </div>
                      <div>
@@ -138,14 +138,14 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ settings, onUpdateSet
                             name="maxDailyWithdrawalTotal"
                             value={formData.maxDailyWithdrawalTotal}
                             onChange={handleChange}
-                            className="w-full bg-gray-700 text-white p-2 rounded-lg border border-gray-600" 
+                            className="w-full bg-base-300 text-white p-2 rounded-lg border border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none" 
                         />
                     </div>
                 </div>
             </div>
 
             <div className="flex justify-end mt-8">
-                <button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg flex items-center transition-all duration-300 ease-in-out shadow-lg hover:shadow-blue-500/50 focus:outline-none focus:ring-4 focus:ring-blue-500/50">
+                <button onClick={handleSave} className="bg-primary hover:bg-primary-dark text-white font-bold py-3 px-6 rounded-lg flex items-center transition-all duration-300 ease-in-out shadow-lg hover:shadow-primary/30 focus:outline-none focus:ring-4 focus:ring-primary/50">
                     <Icon name="check-circle" className="w-5 h-5 mr-2"/>
                     <span>Salvar Todas as Alterações</span>
                 </button>

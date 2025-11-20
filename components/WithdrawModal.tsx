@@ -33,12 +33,12 @@ const WithdrawModal: React.FC<WithdrawModalProps> = ({ onClose, onRequestWithdra
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md relative">
+      <div className="bg-base-200 rounded-lg p-6 w-full max-w-md relative">
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white">
           <Icon name="close" className="w-6 h-6" />
         </button>
         <h2 className="text-2xl font-bold mb-2">Request Withdrawal</h2>
-        <p className="text-gray-400 mb-6">Current Balance: <span className="text-yellow-400 font-bold">${currentBalance.toFixed(2)}</span></p>
+        <p className="text-gray-400 mb-6">Current Balance: <span className="text-accent font-bold">${currentBalance.toFixed(2)}</span></p>
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
@@ -49,7 +49,7 @@ const WithdrawModal: React.FC<WithdrawModalProps> = ({ onClose, onRequestWithdra
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00"
-              className="w-full bg-gray-700 text-white p-3 rounded-lg border border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full bg-base-300 text-white p-3 rounded-lg border border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none"
             />
           </div>
           <div className="mb-4">
@@ -60,11 +60,11 @@ const WithdrawModal: React.FC<WithdrawModalProps> = ({ onClose, onRequestWithdra
               value={pixKey}
               onChange={(e) => setPixKey(e.target.value)}
               placeholder="your.pix.key@example.com"
-              className="w-full bg-gray-700 text-white p-3 rounded-lg border border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full bg-base-300 text-white p-3 rounded-lg border border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none"
             />
           </div>
           {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
-          <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors">
+          <button type="submit" className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-lg transition-colors">
             Submit Request
           </button>
         </form>

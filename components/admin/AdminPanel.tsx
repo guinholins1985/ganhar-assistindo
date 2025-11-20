@@ -59,7 +59,7 @@ const AdminPanel: React.FC<AdminPanelProps> = (props) => {
     };
 
     return (
-        <div className="flex h-screen bg-gray-900 text-gray-200 font-sans">
+        <div className="flex h-screen bg-base-100 text-base-content font-sans">
             <AdminSidebar activeView={activeView} setActiveView={setActiveView} isOpen={isSidebarOpen} setOpen={setSidebarOpen}/>
             <div className="flex-1 flex flex-col overflow-hidden">
                 <AdminHeader 
@@ -67,7 +67,7 @@ const AdminPanel: React.FC<AdminPanelProps> = (props) => {
                     onToggleSidebar={() => setSidebarOpen(!isSidebarOpen)} 
                     activeView={activeView}
                 />
-                <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-4 sm:p-6 lg:p-8">
+                <main className="flex-1 overflow-x-hidden overflow-y-auto bg-base-100 p-4 sm:p-6 lg:p-8">
                     {renderContent()}
                 </main>
             </div>

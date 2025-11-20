@@ -13,6 +13,7 @@ import WithdrawModal from './components/WithdrawModal';
 import AIPoweredRecommendations from './components/AIPoweredRecommendations';
 import AdminPanel from './components/admin/AdminPanel';
 import Icon from './components/Icon';
+import SplashScreen from './components/SplashScreen';
 
 const App: React.FC = () => {
   const [activeView, setActiveView] = useState<View>('home');
@@ -23,6 +24,7 @@ const App: React.FC = () => {
   // Loading and error states
   const [isLoading, setIsLoading] = useState(true);
   const [loadingError, setLoadingError] = useState<string | null>(null);
+  const [isSessionStarted, setIsSessionStarted] = useState(false);
 
   // Audio state
   const [isAudioUnlocked, setIsAudioUnlocked] = useState(false);
@@ -69,11 +71,10 @@ const App: React.FC = () => {
     loadData();
   }, []);
   
-  const handleUnlockAudio = useCallback(() => {
-    if (!isAudioUnlocked) {
-        setIsAudioUnlocked(true);
-    }
-  }, [isAudioUnlocked]);
+  const handleStartSession = useCallback(() => {
+    setIsSessionStarted(true);
+    setIsAudioUnlocked(true); // Unlock audio for the entire session
+  }, []);
 
 
   const handleAddReward = useCallback(async (videoId: string, amount: number) => {
@@ -287,7 +288,6 @@ const App: React.FC = () => {
       rewardAmount: settings!.rewardPerVideo,
       rewardTimeSeconds: settings!.minWatchTime,
       isAudioUnlocked,
-      onUnlockAudio: handleUnlockAudio,
     };
 
     switch (activeView) {
@@ -307,8 +307,8 @@ const App: React.FC = () => {
   
   if (isLoading) {
     return (
-      <div className="bg-black text-white h-screen w-screen flex flex-col items-center justify-center">
-        <svg className="animate-spin h-12 w-12 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <div className="bg-base-200 text-base-content h-screen w-screen flex flex-col items-center justify-center">
+        <svg className="animate-spin h-12 w-12 text-primary mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
@@ -319,13 +319,13 @@ const App: React.FC = () => {
 
   if (loadingError || !currentUser || !settings) {
     return (
-       <div className="bg-black text-white h-screen w-screen flex flex-col items-center justify-center p-4 text-center">
+       <div className="bg-base-200 text-base-content h-screen w-screen flex flex-col items-center justify-center p-4 text-center">
         <Icon name="warning" className="w-16 h-16 text-red-500 mb-4" />
         <h1 className="text-2xl font-bold mb-2">Erro Inesperado</h1>
         <p className="text-gray-400 mb-6">{loadingError || "Não foi possível carregar os dados do usuário ou as configurações."}</p>
         <button 
           onClick={() => window.location.reload()}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+          className="bg-primary hover:bg-primary-dark text-white font-bold py-3 px-6 rounded-lg transition-colors"
         >
           Recarregar
         </button>
@@ -354,9 +354,14 @@ const App: React.FC = () => {
         onSwitchView={() => setIsAdminView(false)}
        />;
   }
+  
+  if (!isSessionStarted) {
+    return <SplashScreen onStart={handleStartSession} />;
+  }
+
 
   return (
-    <div className="bg-black text-white h-screen w-screen overflow-hidden font-sans">
+    <div className="bg-base-100 text-base-content h-screen w-screen overflow-hidden font-sans">
       <main className="h-full">
         {renderContent()}
       </main>
@@ -367,7 +372,7 @@ const App: React.FC = () => {
       {/* Secret button to toggle admin view */}
       <button 
         onClick={() => setIsAdminView(true)}
-        className="absolute bottom-24 right-4 bg-gray-700 p-2 rounded-full z-50 opacity-50 hover:opacity-100"
+        className="absolute bottom-24 right-4 bg-base-300 p-2 rounded-full z-40 opacity-50 hover:opacity-100 transition-opacity"
         aria-label="Abrir Painel do Admin"
         >
         <Icon name="cog" className="w-6 h-6"/>

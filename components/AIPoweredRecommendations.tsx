@@ -33,14 +33,14 @@ const AIPoweredRecommendations: React.FC<AIPoweredRecommendationsProps> = ({ wat
   }, [watchedVideos, apiKey]);
 
   return (
-    <div className="pt-12 pb-24 px-4 h-full overflow-y-auto bg-gray-900">
+    <div className="pt-12 pb-24 px-4 h-full overflow-y-auto bg-base-100">
       <div className="text-center mb-8">
-        <Icon name="recommendations" className="w-16 h-16 mx-auto text-blue-400 mb-4" />
+        <Icon name="recommendations" className="w-16 h-16 mx-auto text-primary mb-4" />
         <h2 className="text-3xl font-bold">Your AI Recommendations</h2>
         <p className="text-gray-400 mt-2">Discover new content tailored just for you!</p>
       </div>
 
-      <div className="bg-gray-800 rounded-lg p-6 min-h-[300px] flex items-center justify-center">
+      <div className="bg-base-200 rounded-lg p-6 min-h-[300px] flex items-center justify-center">
         {isLoading && (
           <div className="flex flex-col items-center space-y-2 text-gray-400">
             <svg className="animate-spin h-8 w-8 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

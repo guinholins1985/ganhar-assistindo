@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Video, User } from '../types';
 import VideoPlayer from './VideoPlayer';
 
@@ -13,10 +13,9 @@ interface VideoFeedProps {
   rewardAmount: number;
   rewardTimeSeconds: number;
   isAudioUnlocked: boolean;
-  onUnlockAudio: () => void;
 }
 
-const VideoFeed: React.FC<VideoFeedProps> = ({ videos, user, onAddReward, onToggleFavorite, newlyAddedVideoId, onScrolledToNewVideo, rewardAmount, rewardTimeSeconds, isAudioUnlocked, onUnlockAudio }) => {
+const VideoFeed: React.FC<VideoFeedProps> = ({ videos, user, onAddReward, onToggleFavorite, newlyAddedVideoId, onScrolledToNewVideo, rewardAmount, rewardTimeSeconds, isAudioUnlocked }) => {
   const [activeVideoId, setActiveVideoId] = useState<string | null>(videos.length > 0 ? videos[0].id : null);
   const feedRef = useRef<HTMLDivElement>(null);
 
@@ -90,7 +89,6 @@ const VideoFeed: React.FC<VideoFeedProps> = ({ videos, user, onAddReward, onTogg
               onVideoEnd={handleVideoEnd}
               loadState={loadState}
               isAudioUnlocked={isAudioUnlocked}
-              onUnlockAudio={onUnlockAudio}
             />
           </div>
         );

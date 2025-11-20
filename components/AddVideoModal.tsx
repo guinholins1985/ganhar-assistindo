@@ -18,7 +18,7 @@ const AddVideoModal: React.FC<AddVideoModalProps> = ({ onClose, onAddVideo }) =>
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md relative">
+      <div className="bg-base-200 rounded-lg p-6 w-full max-w-md relative">
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white">
           <Icon name="close" className="w-6 h-6" />
         </button>
@@ -30,9 +30,9 @@ const AddVideoModal: React.FC<AddVideoModalProps> = ({ onClose, onAddVideo }) =>
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="https://www.youtube.com/watch?v=..."
-            className="w-full bg-gray-700 text-white p-3 rounded-lg mb-4 border border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            className="w-full bg-base-300 text-white p-3 rounded-lg mb-4 border border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none"
           />
-          <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors">
+          <button type="submit" className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-lg transition-colors">
             Add Video
           </button>
         </form>

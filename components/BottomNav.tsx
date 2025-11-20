@@ -15,23 +15,35 @@ const NavButton: React.FC<{
   isActive: boolean;
   onClick: () => void;
 }> = ({ label, icon, isActive, onClick }) => (
-  <button onClick={onClick} className={`flex flex-col items-center justify-center w-full transition-colors duration-200 ${isActive ? 'text-white' : 'text-gray-400'}`}>
-    <Icon name={icon} className="w-7 h-7 mb-0.5" />
-    <span className="text-xs font-medium">{label}</span>
+  <button onClick={onClick} className={`flex flex-col items-center justify-center w-full transition-colors duration-200 ${isActive ? 'text-base-content' : 'text-gray-400 hover:text-base-content'}`}>
+    <Icon name={icon} className="w-6 h-6 mb-1" />
+    <span className="text-[0.6rem] font-bold tracking-wide uppercase">{label}</span>
   </button>
 );
 
 
 const BottomNav: React.FC<BottomNavProps> = ({ activeView, setActiveView, onAddVideoClick }) => {
   return (
-    <nav className="absolute bottom-0 left-0 right-0 h-20 bg-black/50 backdrop-blur-md flex items-center justify-around z-50">
-      <NavButton label="Home" icon="home" isActive={activeView === 'home'} onClick={() => setActiveView('home')} />
-      <NavButton label="Earn" icon="earn" isActive={activeView === 'earn'} onClick={() => setActiveView('earn')} />
-      <button onClick={onAddVideoClick} className="w-16 h-10 bg-white rounded-xl flex items-center justify-center">
-        <Icon name="add" className="w-8 h-8 text-black" />
+    <nav className="absolute bottom-0 left-0 right-0 h-16 bg-base-200/50 backdrop-blur-lg flex items-center z-50 shadow-t-lg">
+      <div className="flex justify-around items-center w-full h-full">
+        <NavButton label="Home" icon="home" isActive={activeView === 'home'} onClick={() => setActiveView('home')} />
+        <NavButton label="Earn" icon="earn" isActive={activeView === 'earn'} onClick={() => setActiveView('earn')} />
+        
+        {/* FAB Placeholder */}
+        <div className="w-20"></div>
+
+        <NavButton label="AI Recs" icon="recommendations" isActive={activeView === 'recommendations'} onClick={() => setActiveView('recommendations')} />
+        <NavButton label="Profile" icon="profile" isActive={activeView === 'profile'} onClick={() => setActiveView('profile')} />
+      </div>
+      
+      {/* Floating Action Button */}
+      <button 
+        onClick={onAddVideoClick} 
+        className="absolute left-1/2 -translate-x-1/2 -top-6 w-16 h-16 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/30 hover:scale-110 transition-transform"
+        aria-label="Add Video"
+      >
+        <Icon name="add" className="w-8 h-8 text-white" />
       </button>
-      <NavButton label="AI Recs" icon="recommendations" isActive={activeView === 'recommendations'} onClick={() => setActiveView('recommendations')} />
-      <NavButton label="Profile" icon="profile" isActive={activeView === 'profile'} onClick={() => setActiveView('profile')} />
     </nav>
   );
 };

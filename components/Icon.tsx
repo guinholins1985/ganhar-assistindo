@@ -1,6 +1,6 @@
 import React from 'react';
 
-type IconName = 'home' | 'earn' | 'add' | 'profile' | 'recommendations' | 'heart' | 'heart-filled' | 'share' | 'comment' | 'close' | 'coin' | 'gift' | 'users' | 'check-circle' | 'cog' | 'dashboard' | 'video-camera' | 'currency-dollar' | 'shield-check' | 'pencil' | 'trash' | 'eye' | 'logout' | 'moon' | 'sun' | 'menu' | 'arrow-left' | 'warning' | 'volume-up' | 'volume-off';
+type IconName = 'home' | 'earn' | 'add' | 'profile' | 'recommendations' | 'heart' | 'heart-filled' | 'share' | 'comment' | 'close' | 'coin' | 'gift' | 'users' | 'check-circle' | 'cog' | 'dashboard' | 'video-camera' | 'currency-dollar' | 'shield-check' | 'pencil' | 'trash' | 'eye' | 'logout' | 'moon' | 'sun' | 'menu' | 'arrow-left' | 'warning' | 'volume-up' | 'volume-off' | 'play';
 
 interface IconProps {
   name: IconName;
@@ -38,12 +38,21 @@ const icons: Record<IconName, React.ReactElement> = {
   warning: <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />,
   'volume-up': <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />,
   'volume-off': <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l-2-2m0 0l-2-2m2 2l-2 2m2-2l2-2" />,
+  play: <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347c-.75.412-1.667-.13-1.667-.985V5.653z" />
 };
 
 
 const Icon: React.FC<IconProps> = ({ name, className = 'w-6 h-6' }) => {
-  const iconStyle = name === 'heart-filled' ? { fill: 'red', stroke: 'red' } : { fill: 'none', stroke: 'currentColor', strokeWidth: 1.5 };
+  const iconStyle = name === 'heart-filled' ? { fill: '#8B5CF6', stroke: '#8B5CF6' } : { fill: 'none', stroke: 'currentColor', strokeWidth: 1.5 };
   
+  if (name === 'play') {
+    return (
+       <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="currentColor" viewBox="0 0 24 24">
+        {icons[name]}
+      </svg>
+    )
+  }
+
   return (
     <svg xmlns="http://www.w3.org/2000/svg" className={className} {...iconStyle} viewBox="0 0 24 24">
       {icons[name]}
