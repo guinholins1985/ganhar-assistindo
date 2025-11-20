@@ -12,7 +12,8 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "@google/genai": "^1.29.1",
-    "idb": "^8.0.3"
+    "idb": "^8.0.3",
+    "react-player": "^3.4.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
