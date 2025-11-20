@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Video, User } from '../types';
 import Icon from './Icon';
@@ -11,6 +12,8 @@ interface VideoPlayerProps {
   rewardTimeSeconds: number;
   onVideoEnd: (videoId: string) => void;
   loadState: 'active' | 'preload' | 'lazy';
+  isAudioUnlocked: boolean;
+  onUnlockAudio: () => void;
 }
 
 const parseDuration = (durationStr: string): number => {
@@ -34,9 +37,9 @@ const formatTime = (timeInSeconds: number): string => {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onToggleFavorite, rewardAmount, rewardTimeSeconds, onVideoEnd, loadState }) => {
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onToggleFavorite, rewardAmount, rewardTimeSeconds, onVideoEnd, loadState, isAudioUnlocked, onUnlockAudio }) => {
   const [isRewarded, setIsRewarded] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(!isAudioUnlocked);
   const [playerReady, setPlayerReady] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [totalDuration, setTotalDuration] = useState(0);
@@ -63,7 +66,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
     setCurrentTime(0);
     setIsRewarded(false);
     setPlayerReady(false);
-  }, [video.id, video.duration]);
+    setIsMuted(!isAudioUnlocked);
+  }, [video.id, video.duration, isAudioUnlocked]);
 
   useEffect(() => {
     if (isRewarded || rewardTimeSeconds <= 0) return;
@@ -172,6 +176,13 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
       return null;
   }, [isVimeo, isYoutube, isDailymotion]);
 
+  const handleMuteToggle = useCallback(() => {
+    if (!isAudioUnlocked) {
+      onUnlockAudio();
+    }
+    setIsMuted(p => !p);
+  }, [isAudioUnlocked, onUnlockAudio]);
+
   if (loadState === 'lazy') {
     return (
       <div className="w-full h-full bg-black">
@@ -219,7 +230,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
         )}
       </div>
       <div className="absolute bottom-24 right-4 flex flex-col items-center space-y-6 z-10">
-        <button onClick={() => setIsMuted(p => !p)} className="flex flex-col items-center text-white">
+        <button onClick={handleMuteToggle} className="flex flex-col items-center text-white">
           <Icon name={isMuted ? 'volume-off' : 'volume-up'} className="w-8 h-8 drop-shadow-lg" />
           <span className="text-xs mt-1 font-semibold">{isMuted ? 'Ativar Som' : 'Silenciar'}</span>
         </button>

@@ -24,6 +24,9 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadingError, setLoadingError] = useState<string | null>(null);
 
+  // Audio state
+  const [isAudioUnlocked, setIsAudioUnlocked] = useState(false);
+
   // State will be loaded from DB
   const [users, setUsers] = useState<User[]>([]);
   const [videos, setVideos] = useState<Video[]>([]);
@@ -65,6 +68,13 @@ const App: React.FC = () => {
 
     loadData();
   }, []);
+  
+  const handleUnlockAudio = useCallback(() => {
+    if (!isAudioUnlocked) {
+        setIsAudioUnlocked(true);
+    }
+  }, [isAudioUnlocked]);
+
 
   const handleAddReward = useCallback(async (videoId: string, amount: number) => {
     const video = videos.find(v => v.id === videoId);
@@ -276,6 +286,8 @@ const App: React.FC = () => {
       onScrolledToNewVideo: handleScrolledToNewVideo,
       rewardAmount: settings!.rewardPerVideo,
       rewardTimeSeconds: settings!.minWatchTime,
+      isAudioUnlocked,
+      onUnlockAudio: handleUnlockAudio,
     };
 
     switch (activeView) {
