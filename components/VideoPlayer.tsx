@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ReactPlayer from 'react-player/lazy';
 import { Video, User } from '../types';
 import Icon from './Icon';
@@ -28,16 +28,19 @@ const formatTime = (timeInSeconds: number): string => {
 
 const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onToggleFavorite, rewardAmount, rewardTimeSeconds, onVideoEnd, loadState, isAudioUnlocked }) => {
   const [isMuted, setIsMuted] = useState(!isAudioUnlocked);
+  const [isPlaying, setIsPlaying] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [totalDuration, setTotalDuration] = useState(0);
   const [isRewarded, setIsRewarded] = useState(false);
   const isFavorite = user.favorites.includes(video.id);
+  const playerRef = useRef<ReactPlayer>(null);
   
   // Reset state when video changes to ensure fresh state for new video
   useEffect(() => {
     setCurrentTime(0);
     setTotalDuration(0);
     setIsRewarded(false);
+    setIsPlaying(true); // Autoplay new videos
     setIsMuted(!isAudioUnlocked);
   }, [video.id, isAudioUnlocked]);
 
@@ -57,6 +60,18 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
   const handleDuration = (duration: number) => {
     setTotalDuration(duration);
   };
+
+  const handleTogglePlay = () => {
+    setIsPlaying(prev => !prev);
+  };
+
+  const handleSeek = (seconds: number) => {
+    if (playerRef.current) {
+        const newTime = Math.max(0, playerRef.current.getCurrentTime() + seconds);
+        playerRef.current.seekTo(newTime, 'seconds');
+        setCurrentTime(newTime);
+    }
+  };
   
   if (loadState === 'lazy') {
     return (
@@ -70,10 +85,11 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
   const rewardProgress = rewardTimeSeconds > 0 ? (Math.min(currentTime, rewardTimeSeconds) / rewardTimeSeconds) * 100 : 0;
   
   return (
-    <div className="relative w-full h-full bg-black">
+    <div className="relative w-full h-full bg-black" onClick={handleTogglePlay}>
       <ReactPlayer
+        ref={playerRef}
         url={video.url}
-        playing={loadState === 'active'}
+        playing={loadState === 'active' && isPlaying}
         muted={isMuted}
         onProgress={handleProgress}
         onDuration={handleDuration}
@@ -89,37 +105,32 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 pointer-events-none"></div>
       
-      <div className="absolute bottom-20 left-4 right-20 text-white z-10 space-y-3">
+      {loadState === 'active' && !isPlaying && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+              <div className="bg-black/40 p-5 rounded-full">
+                  <Icon name="play" className="w-16 h-16 text-white" />
+              </div>
+          </div>
+      )}
+
+      <div className="absolute bottom-40 left-4 right-20 text-white z-10 space-y-3">
         <div>
             <h3 className="font-bold text-xl shadow-black [text-shadow:1px_1px_3px_var(--tw-shadow-color)]">{video.title}</h3>
             <p className="text-sm font-semibold shadow-black [text-shadow:1px_1px_3px_var(--tw-shadow-color)]">{video.channel}</p>
         </div>
-        {totalDuration > 0 && (
-            <div className="w-full flex items-center gap-2 text-white text-xs font-mono [text-shadow:1px_1px_1px_#000]">
-                <span>{formatTime(currentTime)}</span>
-                <div className="flex-grow bg-white/20 h-1 rounded-full overflow-hidden">
-                    <div 
-                        className="bg-white/90 h-1 rounded-full transition-all duration-100 ease-linear"
-                        style={{ width: `${totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0}%` }}
-                    ></div>
-                </div>
-                <span>{formatTime(totalDuration)}</span>
-            </div>
-        )}
       </div>
 
       <div className="absolute bottom-20 right-4 flex flex-col items-center space-y-5 z-10">
-        <button onClick={() => setIsMuted(p => !p)} className="flex flex-col items-center text-white p-2 bg-black/20 rounded-full">
+        <button onClick={(e) => { e.stopPropagation(); setIsMuted(p => !p); }} className="flex flex-col items-center text-white p-2 bg-black/20 rounded-full transition-transform hover:scale-110">
           <Icon name={isMuted ? 'volume-off' : 'volume-up'} className="w-7 h-7 drop-shadow-lg" />
         </button>
-        <button onClick={() => onToggleFavorite(video.id)} className="flex flex-col items-center text-white p-2 bg-black/20 rounded-full">
+        <button onClick={(e) => { e.stopPropagation(); onToggleFavorite(video.id); }} className="flex flex-col items-center text-white p-2 bg-black/20 rounded-full transition-transform hover:scale-110">
           <Icon name={isFavorite ? 'heart-filled' : 'heart'} className="w-7 h-7 drop-shadow-lg" />
         </button>
-        <button className="flex flex-col items-center text-white p-2 bg-black/20 rounded-full">
+        <button onClick={(e) => e.stopPropagation()} className="flex flex-col items-center text-white p-2 bg-black/20 rounded-full transition-transform hover:scale-110">
           <Icon name="comment" className="w-7 h-7 drop-shadow-lg" />
         </button>
-        <button className="flex flex-col items-center text-white p-2 bg-black/20 rounded-full">
-
+        <button onClick={(e) => e.stopPropagation()} className="flex flex-col items-center text-white p-2 bg-black/20 rounded-full transition-transform hover:scale-110">
           <Icon name="share" className="w-7 h-7 drop-shadow-lg" />
         </button>
         <div className="relative w-12 h-12 flex items-center justify-center">
@@ -143,6 +154,48 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
             </div>
         </div>
       </div>
+
+      {/* Playback Controls */}
+      {totalDuration > 0 && (
+        <div className="absolute bottom-4 left-4 right-4 z-20 space-y-2">
+           <div className="w-full flex items-center gap-2 text-white text-xs font-mono [text-shadow:1px_1px_1px_#000]">
+                <span>{formatTime(currentTime)}</span>
+                <div className="flex-grow bg-white/20 h-1.5 rounded-full overflow-hidden cursor-pointer" onClick={(e) => {
+                    e.stopPropagation();
+                    if(playerRef.current) {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const clickX = e.clientX - rect.left;
+                        const width = rect.width;
+                        const newTime = (clickX / width) * totalDuration;
+                        playerRef.current.seekTo(newTime, 'seconds');
+                        setCurrentTime(newTime);
+                    }
+                }}>
+                    <div 
+                        className="bg-white/90 h-full rounded-full transition-all duration-100 ease-linear"
+                        style={{ width: `${totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0}%` }}
+                    ></div>
+                </div>
+                <span>{formatTime(totalDuration)}</span>
+            </div>
+            <div className="flex items-center justify-center gap-10">
+                <button 
+                    onClick={(e) => { e.stopPropagation(); handleSeek(-10); }}
+                    className="p-2 text-white transition-transform hover:scale-110 active:scale-95 drop-shadow-lg"
+                    aria-label="Rewind 10 seconds"
+                >
+                    <Icon name="rewind" className="w-8 h-8" />
+                </button>
+                <button
+                    onClick={(e) => { e.stopPropagation(); handleSeek(10); }}
+                    className="p-2 text-white transition-transform hover:scale-110 active:scale-95 drop-shadow-lg"
+                    aria-label="Forward 10 seconds"
+                >
+                    <Icon name="forward" className="w-8 h-8" />
+                </button>
+            </div>
+        </div>
+      )}
     </div>
   );
 };
