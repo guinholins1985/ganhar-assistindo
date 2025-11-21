@@ -32,6 +32,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
   const [currentTime, setCurrentTime] = useState(0);
   const [totalDuration, setTotalDuration] = useState(0);
   const [isRewarded, setIsRewarded] = useState(false);
+  const [isLinkCopied, setIsLinkCopied] = useState(false);
   const isFavorite = user.favorites.includes(video.id);
   const playerRef = useRef<ReactPlayer>(null);
   
@@ -42,6 +43,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
     setIsRewarded(false);
     setIsPlaying(true); // Autoplay new videos
     setIsMuted(!isAudioUnlocked);
+    setIsLinkCopied(false);
   }, [video.id, isAudioUnlocked]);
 
   // Handle reward logic based on real video progress
@@ -71,6 +73,17 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
         playerRef.current.seekTo(newTime, 'seconds');
         setCurrentTime(newTime);
     }
+  };
+
+  const handleCopyLink = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(video.url).then(() => {
+        setIsLinkCopied(true);
+        setTimeout(() => setIsLinkCopied(false), 2000); // Reset after 2 seconds
+    }).catch(err => {
+        console.error("Failed to copy link:", err);
+        alert("Failed to copy link.");
+    });
   };
   
   if (loadState === 'lazy') {
@@ -132,6 +145,13 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
         </button>
         <button onClick={(e) => e.stopPropagation()} className="flex flex-col items-center text-white p-2 bg-black/20 rounded-full transition-transform hover:scale-110">
           <Icon name="share" className="w-7 h-7 drop-shadow-lg" />
+        </button>
+        <button 
+          onClick={handleCopyLink} 
+          disabled={isLinkCopied}
+          aria-label={isLinkCopied ? "Link Copiado!" : "Copiar Link do Vídeo"}
+          className="flex flex-col items-center text-white p-2 bg-black/20 rounded-full transition-transform hover:scale-110">
+          <Icon name={isLinkCopied ? 'check-circle' : 'clipboard'} className={`w-7 h-7 drop-shadow-lg ${isLinkCopied ? 'text-green-400' : ''}`} />
         </button>
         <div className="relative w-12 h-12 flex items-center justify-center">
             <svg className="w-full h-full transform -rotate-90">

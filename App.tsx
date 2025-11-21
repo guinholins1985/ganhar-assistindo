@@ -72,20 +72,23 @@ const App: React.FC = () => {
     loadData();
   }, []);
   
-  const handleStartSession = useCallback(() => {
-    setIsSessionStarted(true);
-
-    // This is the crucial fix: Play a silent audio track on the first user interaction.
-    // This satisfies browser autoplay policies and "unlocks" the audio context for the page,
-    // allowing subsequent videos to play with sound automatically.
+  const handleStartSession = useCallback(async () => {
+    // This is the crucial fix: Await the promise from playing the silent audio.
+    // This ensures the browser's audio context is successfully unlocked *before*
+    // we set the isAudioUnlocked state. This prevents a race condition that
+    // was causing Vimeo videos to ignore the unmuted state.
     const audioEl = document.getElementById('audio-unlock') as HTMLAudioElement;
     if (audioEl) {
-        audioEl.play().catch(e => {
-            console.warn("Audio context could not be unlocked automatically.", e);
-        });
+      try {
+        await audioEl.play();
+        // Only set unlocked to true after a successful play call.
+        setIsAudioUnlocked(true);
+      } catch (e) {
+        console.warn("Audio context could not be unlocked automatically. Videos will start muted.", e);
+      }
     }
-
-    setIsAudioUnlocked(true); // Unlock audio for the entire session
+    // Proceed to start the session regardless of audio lock status.
+    setIsSessionStarted(true);
   }, []);
 
 
@@ -384,7 +387,7 @@ const App: React.FC = () => {
       {/* Secret button to toggle admin view */}
       <button 
         onClick={() => setIsAdminView(true)}
-        className="absolute bottom-24 right-4 bg-base-300 p-2 rounded-full z-40 opacity-50 hover:opacity-100 transition-opacity"
+        className="absolute top-4 right-4 bg-base-300 p-2 rounded-full z-40 opacity-50 hover:opacity-100 transition-opacity"
         aria-label="Abrir Painel do Admin"
         >
         <Icon name="cog" className="w-6 h-6"/>
