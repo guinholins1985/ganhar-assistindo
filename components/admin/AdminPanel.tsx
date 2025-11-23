@@ -1,6 +1,7 @@
 
+
 import React, { useState } from 'react';
-import { AdminView, User, Video, WithdrawalRequest, AppSettings } from '../../types';
+import { AdminView, User, Video, WithdrawalRequest, AppSettings, Transaction } from '../../types';
 import AdminSidebar from './AdminSidebar';
 import AdminHeader from './AdminHeader';
 import DashboardSection from './DashboardSection';
@@ -21,6 +22,7 @@ interface AdminPanelProps {
     users: User[];
     videos: Video[];
     withdrawalRequests: WithdrawalRequest[];
+    transactions: Transaction[];
     settings: AppSettings;
     onProcessWithdrawal: (requestId: string, status: 'approved' | 'declined') => void;
     onUpdateUser: (user: User) => void;
@@ -44,7 +46,7 @@ const AdminPanel: React.FC<AdminPanelProps> = (props) => {
     const renderContent = () => {
         switch (activeView) {
             case 'dashboard':
-                return <DashboardSection stats={props.stats} withdrawalRequests={props.withdrawalRequests} />;
+                return <DashboardSection stats={props.stats} withdrawalRequests={props.withdrawalRequests} transactions={props.transactions} users={props.users} />;
             case 'users':
                 return <UsersSection users={props.users} onUpdateUser={props.onUpdateUser} onDeleteUser={props.onDeleteUser} showToast={showToast} />;
             case 'videos':
@@ -54,7 +56,7 @@ const AdminPanel: React.FC<AdminPanelProps> = (props) => {
             case 'settings':
                 return <SettingsSection settings={props.settings} onUpdateSettings={props.onUpdateSettings} showToast={showToast} />;
             default:
-                return <DashboardSection stats={props.stats} withdrawalRequests={props.withdrawalRequests}/>;
+                return <DashboardSection stats={props.stats} withdrawalRequests={props.withdrawalRequests} transactions={props.transactions} users={props.users} />;
         }
     };
 

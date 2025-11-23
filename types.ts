@@ -46,6 +46,12 @@ export interface WithdrawalRequest {
   requestDate: Date;
 }
 
+export interface AdSlots {
+  inFeed: string;
+  profileBanner: string;
+  earnBanner: string;
+}
+
 export interface AppSettings {
   appName: string;
   logoUrl: string;
@@ -56,6 +62,11 @@ export interface AppSettings {
   maxDailyWithdrawalTotal: number;
   rewardPerVideo: number;
   minWatchTime: number; // in seconds
+  // AdSense Settings
+  isAdsEnabled: boolean;
+  adsenseClientId: string;
+  adSlots: AdSlots;
+  adFrequencyInFeed: number; // e.g., show an ad every 10 videos
 }
 
 export type View = 'home' | 'earn' | 'recommendations' | 'profile';

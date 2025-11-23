@@ -1,14 +1,20 @@
 
+
 import React from 'react';
-import { Mission } from '../types';
+import { Mission, AppSettings } from '../types';
 import Icon from './Icon';
+import AdSenseAd from './common/AdSenseAd';
+
 
 interface EarnPageProps {
   missions: Mission[];
   onInvite: () => void;
+  settings: AppSettings;
 }
 
-const EarnPage: React.FC<EarnPageProps> = ({ missions, onInvite }) => {
+const EarnPage: React.FC<EarnPageProps> = ({ missions, onInvite, settings }) => {
+  const showAd = settings.isAdsEnabled && settings.adsenseClientId && settings.adSlots.earnBanner;
+
   return (
     <div className="pt-12 pb-24 px-4 h-full overflow-y-auto bg-base-100 text-base-content">
       <div className="text-center mb-8">
@@ -54,6 +60,12 @@ const EarnPage: React.FC<EarnPageProps> = ({ missions, onInvite }) => {
           ))}
         </div>
       </div>
+
+       {showAd && (
+        <div className="mt-8">
+          <AdSenseAd clientId={settings.adsenseClientId} slotId={settings.adSlots.earnBanner} />
+        </div>
+      )}
     </div>
   );
 };

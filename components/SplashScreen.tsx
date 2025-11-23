@@ -12,7 +12,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onStart }) => {
         <Icon name="recommendations" className="w-24 h-24 text-primary" />
       </div>
       <h1 className="text-4xl md:text-5xl font-black text-white mb-4">
-        Bem-vindo ao <span className="text-primary">VideoRewards AI</span>
+        Bem-vindo ao <span className="text-primary">CASH VIRAL</span>
       </h1>
       <p className="text-lg text-gray-300 max-w-xl mb-12">
         Assista a vídeos incríveis, complete missões e ganhe recompensas. Sua próxima descoberta está a um deslize de distância.

@@ -303,15 +303,21 @@ const App: React.FC = () => {
       rewardAmount: settings!.rewardPerVideo,
       rewardTimeSeconds: settings!.minWatchTime,
       isAudioUnlocked,
+      adSettings: {
+        isAdsEnabled: settings!.isAdsEnabled,
+        adsenseClientId: settings!.adsenseClientId,
+        adSlots: settings!.adSlots,
+        adFrequencyInFeed: settings!.adFrequencyInFeed,
+      }
     };
 
     switch (activeView) {
       case 'home':
         return <VideoFeed {...videoFeedProps} />;
       case 'earn':
-        return <EarnPage missions={missions} onInvite={() => alert("Invite link copied!")} />;
+        return <EarnPage missions={missions} onInvite={() => alert("Invite link copied!")} settings={settings}/>;
       case 'profile':
-        return <ProfilePage user={currentUser!} transactions={transactions} onWithdraw={() => setActiveModal('withdraw')} />;
+        return <ProfilePage user={currentUser!} transactions={transactions} onWithdraw={() => setActiveModal('withdraw')} settings={settings}/>;
       case 'recommendations':
         const watchedVideos = videos.filter(v => transactions.some(t => t.description.includes(v.title)));
         return <AIPoweredRecommendations watchedVideos={watchedVideos} apiKey={settings.geminiApiKey} />;
@@ -358,6 +364,7 @@ const App: React.FC = () => {
         users={users}
         videos={videos}
         withdrawalRequests={withdrawalRequests}
+        transactions={transactions}
         settings={settings}
         onProcessWithdrawal={handleProcessWithdrawal}
         onUpdateUser={handleUpdateUser}

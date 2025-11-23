@@ -1,4 +1,5 @@
 
+
 import { openDB, IDBPDatabase } from 'idb';
 import { User, Video, Transaction, WithdrawalRequest, AppSettings } from '../types';
 import { INITIAL_USERS, INITIAL_VIDEOS, INITIAL_TRANSACTIONS, INITIAL_WITHDRAWAL_REQUESTS, INITIAL_SETTINGS } from '../constants';
@@ -47,6 +48,11 @@ const seedInitialData = async () => {
     const settingsCount = await db.count(STORES.SETTINGS);
     if (settingsCount === 0) {
         await db.add(STORES.SETTINGS, INITIAL_SETTINGS);
+    } else {
+        // Ensure new settings fields are added if they don't exist
+        const currentSettings = await db.get(STORES.SETTINGS, INITIAL_SETTINGS.appName);
+        const updatedSettings = { ...INITIAL_SETTINGS, ...currentSettings };
+        await db.put(STORES.SETTINGS, updatedSettings);
     }
     
     // Users
@@ -112,6 +118,8 @@ export const updateWithdrawalRequest = (req: WithdrawalRequest) => put(STORES.WI
 // Settings
 export const getSettings = async (): Promise<AppSettings> => {
     // Since there's only one settings object, we can get it by its known key.
-    return await db.get(STORES.SETTINGS, INITIAL_SETTINGS.appName) || INITIAL_SETTINGS;
+    const settings = await db.get(STORES.SETTINGS, INITIAL_SETTINGS.appName)
+    // Merge with defaults to ensure all keys are present
+    return { ...INITIAL_SETTINGS, ...settings };
 }
 export const updateSettings = (settings: AppSettings) => put(STORES.SETTINGS, settings);

@@ -73,7 +73,7 @@ export const INITIAL_WITHDRAWAL_REQUESTS: WithdrawalRequest[] = [
 ];
 
 export const INITIAL_SETTINGS: AppSettings = {
-  appName: 'VideoRewards AI',
+  appName: 'CASH VIRAL',
   logoUrl: '/logo.png',
   geminiApiKey: '••••••••••••••••••••',
   youtubeApiKey: '••••••••••••••••••••',
@@ -82,4 +82,12 @@ export const INITIAL_SETTINGS: AppSettings = {
   maxDailyWithdrawalTotal: 10000.00,
   rewardPerVideo: 0.10,
   minWatchTime: 10,
+  isAdsEnabled: false,
+  adsenseClientId: '',
+  adSlots: {
+    inFeed: '',
+    profileBanner: '',
+    earnBanner: '',
+  },
+  adFrequencyInFeed: 10,
 };

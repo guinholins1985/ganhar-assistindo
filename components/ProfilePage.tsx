@@ -1,15 +1,19 @@
 
+
 import React from 'react';
-import { User, Transaction } from '../types';
-import Icon from './Icon';
+import { User, Transaction, AppSettings } from '../types';
+import AdSenseAd from './common/AdSenseAd';
 
 interface ProfilePageProps {
   user: User;
   transactions: Transaction[];
   onWithdraw: () => void;
+  settings: AppSettings;
 }
 
-const ProfilePage: React.FC<ProfilePageProps> = ({ user, transactions, onWithdraw }) => {
+const ProfilePage: React.FC<ProfilePageProps> = ({ user, transactions, onWithdraw, settings }) => {
+  const showAd = settings.isAdsEnabled && settings.adsenseClientId && settings.adSlots.profileBanner;
+
   return (
     <div className="pt-12 pb-24 h-full overflow-y-auto bg-base-100 text-base-content">
       <div className="px-4">
@@ -53,6 +57,12 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, transactions, onWithdra
           )}
         </div>
       </div>
+      
+      {showAd && (
+        <div className="px-4 mt-8">
+          <AdSenseAd clientId={settings.adsenseClientId} slotId={settings.adSlots.profileBanner} />
+        </div>
+      )}
     </div>
   );
 };

@@ -1,7 +1,9 @@
 
-import React, { useEffect, useState, useRef } from 'react';
-import { Video, User } from '../types';
+
+import React, { useEffect, useState, useRef, useMemo } from 'react';
+import { Video, User, AppSettings } from '../types';
 import VideoPlayer from './VideoPlayer';
+import AdSenseAd from './common/AdSenseAd';
 
 interface VideoFeedProps {
   videos: Video[];
@@ -13,15 +15,30 @@ interface VideoFeedProps {
   rewardAmount: number;
   rewardTimeSeconds: number;
   isAudioUnlocked: boolean;
+  adSettings: Pick<AppSettings, 'isAdsEnabled' | 'adsenseClientId' | 'adSlots' | 'adFrequencyInFeed'>;
 }
 
-const VideoFeed: React.FC<VideoFeedProps> = ({ videos, user, onAddReward, onToggleFavorite, newlyAddedVideoId, onScrolledToNewVideo, rewardAmount, rewardTimeSeconds, isAudioUnlocked }) => {
-  const [activeVideoId, setActiveVideoId] = useState<string | null>(videos.length > 0 ? videos[0].id : null);
+const VideoFeed: React.FC<VideoFeedProps> = ({ videos, user, onAddReward, onToggleFavorite, newlyAddedVideoId, onScrolledToNewVideo, rewardAmount, rewardTimeSeconds, isAudioUnlocked, adSettings }) => {
+  const [activeItemId, setActiveItemId] = useState<string | null>(videos.length > 0 ? videos[0].id : null);
   const feedRef = useRef<HTMLDivElement>(null);
 
+  const feedItems = useMemo(() => {
+    if (!adSettings.isAdsEnabled || !adSettings.adSlots.inFeed || adSettings.adFrequencyInFeed <= 0) {
+      return videos;
+    }
+    const items: (Video | { type: 'ad'; id: string })[] = [];
+    videos.forEach((video, index) => {
+      items.push(video);
+      if ((index + 1) % adSettings.adFrequencyInFeed === 0) {
+        items.push({ type: 'ad', id: `ad-${index}` });
+      }
+    });
+    return items;
+  }, [videos, adSettings]);
+  
   useEffect(() => {
     if (newlyAddedVideoId) {
-      const element = document.getElementById(`video-container-${newlyAddedVideoId}`);
+      const element = document.getElementById(`item-container-${newlyAddedVideoId}`);
       if (element) {
         setTimeout(() => {
           element.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -34,64 +51,72 @@ const VideoFeed: React.FC<VideoFeedProps> = ({ videos, user, onAddReward, onTogg
   useEffect(() => {
     const options = {
       root: feedRef.current,
-      threshold: 0.6, // Video is "active" when 60% is visible
+      threshold: 0.6,
     };
 
     const callback = (entries: IntersectionObserverEntry[]) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
-          setActiveVideoId(entry.target.id.replace('video-container-', ''));
+          setActiveItemId(entry.target.id.replace('item-container-', ''));
         }
       });
     };
 
     const observer = new IntersectionObserver(callback, options);
-    const elements = Array.from(document.querySelectorAll('.video-container'));
+    const elements = Array.from(document.querySelectorAll('.feed-item'));
     elements.forEach(el => observer.observe(el));
 
     return () => elements.forEach(el => observer.unobserve(el));
-  }, [videos]);
+  }, [feedItems]);
   
   const handleVideoEnd = (endedVideoId: string) => {
-    const currentIndex = videos.findIndex(v => v.id === endedVideoId);
+    const currentIndex = feedItems.findIndex(v => 'id' in v && v.id === endedVideoId);
 
     if (currentIndex > -1) {
-      const nextIndex = (currentIndex + 1) % videos.length;
-      const nextVideo = videos[nextIndex];
-      if (nextVideo) {
-        const element = document.getElementById(`video-container-${nextVideo.id}`);
+      const nextIndex = (currentIndex + 1) % feedItems.length;
+      const nextItem = feedItems[nextIndex];
+      if (nextItem) {
+        const element = document.getElementById(`item-container-${nextItem.id}`);
         element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }
   };
 
-  const activeIndex = activeVideoId ? videos.findIndex(v => v.id === activeVideoId) : 0;
+  const activeIndex = activeItemId ? feedItems.findIndex(item => item.id === activeItemId) : 0;
 
   return (
     <div ref={feedRef} className="relative h-screen w-full overflow-y-auto snap-y snap-mandatory">
-      {videos.map((video, index) => {
+      {feedItems.map((item, index) => {
         let loadState: 'active' | 'preload' | 'lazy' = 'lazy';
         if (index === activeIndex) {
           loadState = 'active';
-        } else if (Math.abs(index - activeIndex) === 1) {
+        } else if (Math.abs(index - activeIndex) <= 1) { // Preload next and previous
           loadState = 'preload';
         }
 
-        return (
-          <div key={video.id} id={`video-container-${video.id}`} className="video-container h-screen w-full snap-start flex items-center justify-center relative">
-            <VideoPlayer
-              video={video}
-              user={user}
-              onAddReward={onAddReward}
-              onToggleFavorite={onToggleFavorite}
-              rewardAmount={rewardAmount}
-              rewardTimeSeconds={rewardTimeSeconds}
-              onVideoEnd={handleVideoEnd}
-              loadState={loadState}
-              isAudioUnlocked={isAudioUnlocked}
-            />
-          </div>
-        );
+        if ('url' in item) { // It's a Video
+          return (
+            <div key={item.id} id={`item-container-${item.id}`} className="feed-item h-screen w-full snap-start flex items-center justify-center relative">
+              <VideoPlayer
+                video={item}
+                user={user}
+                onAddReward={onAddReward}
+                onToggleFavorite={onToggleFavorite}
+                rewardAmount={rewardAmount}
+                rewardTimeSeconds={rewardTimeSeconds}
+                onVideoEnd={handleVideoEnd}
+                loadState={loadState}
+                isAudioUnlocked={isAudioUnlocked}
+              />
+            </div>
+          );
+        } else { // It's an Ad
+          return (
+             <div key={item.id} id={`item-container-${item.id}`} className="feed-item h-screen w-full snap-start flex items-center justify-center relative bg-base-200">
+                <AdSenseAd clientId={adSettings.adsenseClientId} slotId={adSettings.adSlots.inFeed} />
+            </div>
+          );
+        }
       })}
     </div>
   );
