@@ -1,16 +1,20 @@
 
+
 import { GoogleGenAI } from "@google/genai";
 import { Video } from '../types';
 
-export const getRecommendations = async (watchedVideos: Video[], apiKey: string): Promise<string> => {
+// FIX: Removed apiKey parameter. The API key must be sourced from process.env.API_KEY.
+export const getRecommendations = async (watchedVideos: Video[]): Promise<string> => {
   try {
-    if (!apiKey || apiKey.startsWith('••••')) {
-      return "A chave de API do Gemini não está configurada. Adicione-a no painel de administração.";
+    // FIX: Check for the API key in environment variables, not from app settings.
+    if (!process.env.API_KEY) {
+      return "A chave de API do Gemini não está configurada no ambiente do aplicativo.";
     }
-    const ai = new GoogleGenAI({ apiKey });
+    // FIX: Initialize GoogleGenAI with the API key from environment variables.
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
     if (watchedVideos.length === 0) {
-      return "You haven't watched any videos yet. Watch some videos and I'll give you personalized recommendations!";
+      return "Você ainda não assistiu a nenhum vídeo. Assista a alguns vídeos e eu lhe darei recomendações personalizadas!";
     }
 
     const watchedTitles = watchedVideos.map(v => v.title).join(', ');
@@ -36,9 +40,10 @@ export const getRecommendations = async (watchedVideos: Video[], apiKey: string)
       contents: prompt,
     });
 
-    return response.text;
+    // FIX: Safely handle potentially undefined response text and provide a fallback message.
+    return response.text ?? "Desculpe, não consegui gerar recomendações no momento.";
   } catch (error) {
     console.error("Error fetching recommendations from Gemini API:", error);
-    return "Sorry, I couldn't fetch recommendations at the moment. Please try again later.";
+    return "Desculpe, não consegui buscar recomendações no momento. Por favor, tente novamente mais tarde.";
   }
 };

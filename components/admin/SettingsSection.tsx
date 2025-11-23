@@ -1,5 +1,6 @@
 
 
+
 import React, { useState } from 'react';
 import Icon from '../Icon';
 import { AppSettings } from '../../types';
@@ -110,11 +111,8 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ settings, onUpdateSet
 
             <div className="bg-base-200 rounded-lg p-6">
                 <h3 className="text-xl font-semibold mb-4 text-white">Chaves de API</h3>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-1">Chave de API Gemini AI</label>
-                        <input type="password" name="geminiApiKey" value={formData.geminiApiKey} onChange={handleChange} className="w-full bg-base-300 text-white p-2 rounded-lg border border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none" />
-                    </div>
+                 {/* FIX: Removed Gemini API Key field and adjusted grid layout. */}
+                 <div className="grid grid-cols-1 gap-6">
                     <div>
                         <label className="block text-sm font-medium text-gray-400 mb-1">Chave de API do YouTube</label>
                         <input type="password" name="youtubeApiKey" value={formData.youtubeApiKey} onChange={handleChange} className="w-full bg-base-300 text-white p-2 rounded-lg border border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none" />

@@ -1,7 +1,8 @@
 
 
 import { openDB, IDBPDatabase } from 'idb';
-import { User, Video, Transaction, WithdrawalRequest, AppSettings } from '../types';
+// FIX: Import Category and SystemLog types.
+import { User, Video, Transaction, WithdrawalRequest, AppSettings, Category, SystemLog } from '../types';
 import { INITIAL_USERS, INITIAL_VIDEOS, INITIAL_TRANSACTIONS, INITIAL_WITHDRAWAL_REQUESTS, INITIAL_SETTINGS } from '../constants';
 
 const DB_NAME = 'VideoRewardsDB';
@@ -13,6 +14,9 @@ const STORES = {
     TRANSACTIONS: 'transactions',
     WITHDRAWAL_REQUESTS: 'withdrawalRequests',
     SETTINGS: 'settings',
+    // FIX: Add stores for categories and system logs.
+    CATEGORIES: 'categories',
+    SYSTEM_LOGS: 'systemLogs',
 };
 
 let db: IDBPDatabase;
@@ -36,6 +40,13 @@ export const initDB = async () => {
             }
             if (!db.objectStoreNames.contains(STORES.SETTINGS)) {
                 db.createObjectStore(STORES.SETTINGS, { keyPath: 'appName' });
+            }
+            // FIX: Create object stores for new types if they don't exist.
+            if (!db.objectStoreNames.contains(STORES.CATEGORIES)) {
+                db.createObjectStore(STORES.CATEGORIES, { keyPath: 'id' });
+            }
+            if (!db.objectStoreNames.contains(STORES.SYSTEM_LOGS)) {
+                db.createObjectStore(STORES.SYSTEM_LOGS, { keyPath: 'id' });
             }
         },
     });
@@ -123,3 +134,15 @@ export const getSettings = async (): Promise<AppSettings> => {
     return { ...INITIAL_SETTINGS, ...settings };
 }
 export const updateSettings = (settings: AppSettings) => put(STORES.SETTINGS, settings);
+
+// FIX: Add service functions for categories.
+// Categories
+export const getAllCategories = (): Promise<Category[]> => getAll<Category>(STORES.CATEGORIES);
+export const addCategory = (category: Category) => add(STORES.CATEGORIES, category);
+export const updateCategory = (category: Category) => put(STORES.CATEGORIES, category);
+export const deleteCategory = (id: string) => deleteFromStore(STORES.CATEGORIES, id);
+
+// FIX: Add service functions for system logs.
+// System Logs
+export const getAllSystemLogs = (): Promise<SystemLog[]> => getAll<SystemLog>(STORES.SYSTEM_LOGS);
+export const addSystemLog = (log: SystemLog) => add(STORES.SYSTEM_LOGS, log);

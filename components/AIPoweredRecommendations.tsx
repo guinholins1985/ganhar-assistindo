@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Video } from '../types';
 import { getRecommendations } from '../services/geminiService';
@@ -6,10 +7,10 @@ import Icon from './Icon';
 
 interface AIPoweredRecommendationsProps {
   watchedVideos: Video[];
-  apiKey: string;
+  // FIX: Removed apiKey prop. The key is now handled by the geminiService.
 }
 
-const AIPoweredRecommendations: React.FC<AIPoweredRecommendationsProps> = ({ watchedVideos, apiKey }) => {
+const AIPoweredRecommendations: React.FC<AIPoweredRecommendationsProps> = ({ watchedVideos }) => {
   const [recommendations, setRecommendations] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,7 +20,8 @@ const AIPoweredRecommendations: React.FC<AIPoweredRecommendationsProps> = ({ wat
       setIsLoading(true);
       setError(null);
       try {
-        const result = await getRecommendations(watchedVideos, apiKey);
+        // FIX: Call getRecommendations without the apiKey argument.
+        const result = await getRecommendations(watchedVideos);
         setRecommendations(result);
       } catch (err) {
         setError('Failed to fetch recommendations.');
@@ -30,7 +32,8 @@ const AIPoweredRecommendations: React.FC<AIPoweredRecommendationsProps> = ({ wat
     };
 
     fetchRecs();
-  }, [watchedVideos, apiKey]);
+  // FIX: Removed apiKey from the dependency array.
+  }, [watchedVideos]);
 
   return (
     <div className="pt-12 pb-24 px-4 h-full overflow-y-auto bg-base-100">

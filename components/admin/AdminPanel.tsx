@@ -1,7 +1,8 @@
 
 
 import React, { useState } from 'react';
-import { AdminView, User, Video, WithdrawalRequest, AppSettings, Transaction } from '../../types';
+// FIX: Import Category and SystemLog types to be used in props.
+import { AdminView, User, Video, WithdrawalRequest, AppSettings, Transaction, Category, SystemLog } from '../../types';
 import AdminSidebar from './AdminSidebar';
 import AdminHeader from './AdminHeader';
 import DashboardSection from './DashboardSection';
@@ -13,6 +14,7 @@ import AdminToast from './AdminToast';
 
 type ShowToastFn = (message: string, type?: 'success' | 'error') => void;
 
+// FIX: Update props to accept categories, system logs, and their respective handlers from App.tsx.
 interface AdminPanelProps {
     stats: {
         totalUsers: number;
@@ -24,6 +26,9 @@ interface AdminPanelProps {
     withdrawalRequests: WithdrawalRequest[];
     transactions: Transaction[];
     settings: AppSettings;
+    categories: Category[];
+    systemLogs: SystemLog[];
+    currentUser: User;
     onProcessWithdrawal: (requestId: string, status: 'approved' | 'declined') => void;
     onUpdateUser: (user: User) => void;
     onDeleteUser: (userId: string) => void;
@@ -32,6 +37,10 @@ interface AdminPanelProps {
     onAddVideo: (url: string) => Promise<string>;
     onUpdateSettings: (settings: AppSettings) => void;
     onSwitchView: () => void;
+    onAddCategory: (name: string) => Promise<void>;
+    onUpdateCategory: (category: Category) => Promise<void>;
+    onDeleteCategory: (id: string) => Promise<void>;
+    logAdminAction: (description: string) => Promise<void>;
 }
 
 const AdminPanel: React.FC<AdminPanelProps> = (props) => {
