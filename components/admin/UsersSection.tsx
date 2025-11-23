@@ -1,7 +1,7 @@
 
 
 import React, { useState, useMemo } from 'react';
-import { User } from '../../types';
+import { User, Video, Transaction } from '../../types';
 import Icon from '../Icon';
 import UserDetailsModal from './modals/UserDetailsModal';
 
@@ -9,12 +9,14 @@ type ShowToastFn = (message: string, type?: 'success' | 'error') => void;
 
 interface UsersSectionProps {
     users: User[];
+    videos: Video[];
+    transactions: Transaction[];
     onUpdateUser: (user: User) => Promise<void>;
     onDeleteUser: (userId: string) => Promise<void>;
     showToast: ShowToastFn;
 }
 
-const UsersSection: React.FC<UsersSectionProps> = ({ users, onUpdateUser, onDeleteUser, showToast }) => {
+const UsersSection: React.FC<UsersSectionProps> = ({ users, videos, transactions, onUpdateUser, onDeleteUser, showToast }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState<'all' | 'active' | 'banned'>('all');
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
@@ -151,6 +153,8 @@ const UsersSection: React.FC<UsersSectionProps> = ({ users, onUpdateUser, onDele
             {viewingUser && (
                 <UserDetailsModal 
                     user={viewingUser}
+                    videos={videos}
+                    transactions={transactions.filter(t => t.userId === viewingUser.id)}
                     onClose={() => setViewingUser(null)}
                     onUpdateUser={onUpdateUser}
                     showToast={showToast}

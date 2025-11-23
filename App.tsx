@@ -369,7 +369,7 @@ const App: React.FC = () => {
       case 'earn':
         return <EarnPage missions={missions} onInvite={() => alert("Invite link copied!")} settings={settings}/>;
       case 'profile':
-        return <ProfilePage user={currentUser!} transactions={transactions} onWithdraw={() => setActiveModal('withdraw')} settings={settings}/>;
+        return <ProfilePage user={currentUser!} transactions={transactions.filter(t => t.userId === currentUser!.id)} onWithdraw={() => setActiveModal('withdraw')} settings={settings}/>;
       case 'recommendations':
         const watchedVideos = videos.filter(v => transactions.some(t => t.userId === currentUser?.id && t.description.includes(v.title)));
         return <AIPoweredRecommendations watchedVideos={watchedVideos} />;

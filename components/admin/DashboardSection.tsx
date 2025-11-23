@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Icon from '../Icon';
-import { WithdrawalRequest, Transaction, User } from '../../types';
+import { WithdrawalRequest, Transaction, User, SystemLog } from '../../types';
 import Chart from '../common/Chart';
 
 interface DashboardSectionProps {
@@ -14,6 +14,7 @@ interface DashboardSectionProps {
     withdrawalRequests: WithdrawalRequest[];
     transactions: Transaction[];
     users: User[];
+    systemLogs: SystemLog[];
 }
 
 const StatCard: React.FC<{ icon: 'users' | 'check-circle' | 'currency-dollar' | 'gift', title: string; value: string; color: string }> = ({ icon, title, value, color }) => (
@@ -29,14 +30,9 @@ const StatCard: React.FC<{ icon: 'users' | 'check-circle' | 'currency-dollar' | 
 );
 
 
-const DashboardSection: React.FC<DashboardSectionProps> = ({ stats, withdrawalRequests, transactions, users }) => {
+const DashboardSection: React.FC<DashboardSectionProps> = ({ stats, withdrawalRequests, transactions, users, systemLogs }) => {
     const pendingWithdrawals = withdrawalRequests.filter(r => r.status === 'pending');
     const pendingWithdrawalsTotal = pendingWithdrawals.reduce((sum, r) => sum + r.amount, 0);
-
-    const recentActivities = [...pendingWithdrawals, ...transactions]
-        .sort((a, b) => ('requestDate' in a ? a.requestDate.getTime() : a.timestamp.getTime()) < ('requestDate' in b ? b.requestDate.getTime() : b.timestamp.getTime()) ? 1 : -1)
-        .slice(0, 5);
-
 
     return (
         <div className="space-y-8">
@@ -53,22 +49,18 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ stats, withdrawalRe
                     <Chart type="line" />
                 </div>
                  <div className="bg-base-200 rounded-xl p-6 shadow-lg">
-                    <h3 className="text-xl font-semibold mb-4 text-white">Atividade Recente</h3>
-                    <div className="space-y-4">
-                        {recentActivities.map(activity => (
-                             <div key={activity.id} className="flex items-start text-sm">
-                                <Icon name={'requestDate' in activity ? 'gift' : 'coin'} className="w-5 h-5 mr-3 mt-1 text-gray-500 flex-shrink-0"/>
+                    <h3 className="text-xl font-semibold mb-4 text-white">Logs do Sistema</h3>
+                    <div className="space-y-4 max-h-96 overflow-y-auto">
+                        {systemLogs.slice(0, 10).map(log => (
+                             <div key={log.id} className="flex items-start text-sm">
+                                <Icon name={'cog'} className="w-5 h-5 mr-3 mt-1 text-gray-500 flex-shrink-0"/>
                                 <div>
-                                    {'requestDate' in activity ? (
-                                        <p><span className="font-bold text-white">{activity.userName}</span> solicitou um saque de <span className="text-accent">${activity.amount.toFixed(2)}</span>.</p>
-                                    ) : (
-                                        <p><span className="font-bold text-white">Nova transação:</span> {activity.description} (<span className={activity.amount > 0 ? 'text-green-400' : 'text-red-400'}>${activity.amount.toFixed(2)}</span>).</p>
-                                    )}
-                                    <p className="text-xs text-gray-500">{('requestDate' in activity ? activity.requestDate : activity.timestamp).toLocaleDateString()}</p>
+                                    <p className="text-gray-300">{log.description}</p>
+                                    <p className="text-xs text-gray-500">{log.timestamp.toLocaleString()}</p>
                                 </div>
                             </div>
                         ))}
-                         {recentActivities.length === 0 && <p className="text-gray-500 text-center py-4">Nenhuma atividade recente.</p>}
+                         {systemLogs.length === 0 && <p className="text-gray-500 text-center py-4">Nenhum log do sistema.</p>}
                     </div>
                 </div>
             </div>

@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { User, Video, Transaction } from '../../../types';
 import Icon from '../../Icon';
@@ -19,6 +20,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, videos, trans
     const [adminNotes, setAdminNotes] = useState(user.adminNotes || '');
 
     const favoriteVideos = videos.filter(v => user.favorites.includes(v.id));
+    const userTransactions = transactions.filter(t => t.userId === user.id);
 
     const handleAddBonus = async () => {
         const amount = parseFloat(bonusAmount);
@@ -84,9 +86,9 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, videos, trans
                     <section>
                         <h3 className="font-semibold mb-2 text-primary">Histórico de Transações</h3>
                         <div className="bg-base-200 p-4 rounded-lg max-h-48 overflow-y-auto">
-                            {transactions.length > 0 ? (
+                            {userTransactions.length > 0 ? (
                                 <ul className="space-y-2">
-                                    {transactions.map(t => (
+                                    {userTransactions.map(t => (
                                         <li key={t.id} className="flex justify-between text-sm">
                                             <span>{t.description}</span>
                                             <span className={`font-mono ${t.amount >= 0 ? 'text-green-400' : 'text-red-400'}`}>${t.amount.toFixed(2)}</span>

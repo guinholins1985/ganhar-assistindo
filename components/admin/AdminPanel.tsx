@@ -55,17 +55,18 @@ const AdminPanel: React.FC<AdminPanelProps> = (props) => {
     const renderContent = () => {
         switch (activeView) {
             case 'dashboard':
-                return <DashboardSection stats={props.stats} withdrawalRequests={props.withdrawalRequests} transactions={props.transactions} users={props.users} />;
+                return <DashboardSection stats={props.stats} withdrawalRequests={props.withdrawalRequests} transactions={props.transactions} users={props.users} systemLogs={props.systemLogs} />;
             case 'users':
-                return <UsersSection users={props.users} onUpdateUser={props.onUpdateUser} onDeleteUser={props.onDeleteUser} showToast={showToast} />;
+                // FIX: Pass videos and transactions to UsersSection
+                return <UsersSection users={props.users} videos={props.videos} transactions={props.transactions} onUpdateUser={props.onUpdateUser} onDeleteUser={props.onDeleteUser} showToast={showToast} />;
             case 'videos':
-                return <VideosSection videos={props.videos} onUpdateVideo={props.onUpdateVideo} onDeleteVideo={props.onDeleteVideo} onAddVideo={props.onAddVideo} showToast={showToast} />;
+                return <VideosSection videos={props.videos} categories={props.categories} onUpdateVideo={props.onUpdateVideo} onDeleteVideo={props.onDeleteVideo} onAddVideo={props.onAddVideo} showToast={showToast} onAddCategory={props.onAddCategory} onUpdateCategory={props.onUpdateCategory} onDeleteCategory={props.onDeleteCategory} logAdminAction={props.logAdminAction} />;
             case 'rewards':
-                return <RewardsSection requests={props.withdrawalRequests} onProcess={props.onProcessWithdrawal} showToast={showToast} />;
+                return <RewardsSection requests={props.withdrawalRequests} transactions={props.transactions} onProcess={props.onProcessWithdrawal} showToast={showToast} />;
             case 'settings':
                 return <SettingsSection settings={props.settings} onUpdateSettings={props.onUpdateSettings} showToast={showToast} />;
             default:
-                return <DashboardSection stats={props.stats} withdrawalRequests={props.withdrawalRequests} transactions={props.transactions} users={props.users} />;
+                return <DashboardSection stats={props.stats} withdrawalRequests={props.withdrawalRequests} transactions={props.transactions} users={props.users} systemLogs={props.systemLogs}/>;
         }
     };
 
