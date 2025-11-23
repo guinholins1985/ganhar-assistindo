@@ -23,14 +23,14 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, transactions, onWithdra
           <p className="text-sm text-gray-400">{user.email}</p>
         </div>
 
-        <div className="bg-primary rounded-2xl p-6 mb-8 text-center shadow-lg text-white">
-          <p className="text-sm opacity-80">Seu Saldo</p>
-          <p className="text-5xl font-black my-2 tracking-tight">
+        <div className="bg-base-200 rounded-2xl p-6 mb-8 text-center shadow-lg">
+          <p className="text-sm text-gray-400">Seu Saldo</p>
+          <p className="text-5xl font-black my-2 tracking-tight text-primary">
             ${user.balance.toFixed(2)}
           </p>
           <button 
             onClick={onWithdraw} 
-            className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-bold py-3 px-6 rounded-xl transition-colors w-full mt-2"
+            className="bg-primary text-white w-full mt-4 font-bold py-3 px-6 rounded-lg shadow-lg shadow-primary/30 transition-all duration-200 ease-in-out transform hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0 active:shadow-md"
           >
             Sacar Fundos
           </button>

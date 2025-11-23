@@ -7,7 +7,7 @@ interface SplashScreenProps {
 
 const SplashScreen: React.FC<SplashScreenProps> = ({ onStart }) => {
   return (
-    <div className="h-screen w-screen bg-gradient-to-br from-base-200 to-base-100 flex flex-col items-center justify-center p-4 text-center">
+    <div className="h-screen w-screen bg-base-100 flex flex-col items-center justify-center p-4 text-center">
       <div className="mb-8">
         <Icon name="recommendations" className="w-24 h-24 text-primary" />
       </div>
@@ -19,7 +19,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onStart }) => {
       </p>
       <button
         onClick={onStart}
-        className="bg-primary hover:bg-primary-dark text-white font-bold py-4 px-10 rounded-full text-lg flex items-center space-x-3 transition-transform hover:scale-105 shadow-lg shadow-primary/30"
+        className="bg-primary text-white font-bold py-4 px-10 rounded-full text-lg flex items-center space-x-3 shadow-lg shadow-primary/30 transition-all duration-200 ease-in-out transform hover:-translate-y-1 hover:shadow-xl active:translate-y-0 active:shadow-md"
       >
         <Icon name="play" className="w-6 h-6" />
         <span>Começar a Assistir</span>

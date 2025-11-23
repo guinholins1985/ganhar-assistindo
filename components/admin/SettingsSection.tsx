@@ -153,7 +153,10 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ settings, onUpdateSet
             </div>
 
             <div className="flex justify-end mt-8">
-                <button onClick={handleSave} className="bg-primary hover:bg-primary-dark text-white font-bold py-3 px-6 rounded-lg flex items-center transition-all duration-300 ease-in-out shadow-lg hover:shadow-primary/30 focus:outline-none focus:ring-4 focus:ring-primary/50">
+                <button 
+                    onClick={handleSave} 
+                    className="bg-primary text-white font-bold py-3 px-6 rounded-lg flex items-center shadow-lg shadow-primary/30 transition-all duration-200 ease-in-out transform hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0 active:shadow-md"
+                >
                     <Icon name="check-circle" className="w-5 h-5 mr-2"/>
                     <span>Salvar Todas as Alterações</span>
                 </button>

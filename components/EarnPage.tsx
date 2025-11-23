@@ -24,12 +24,15 @@ const EarnPage: React.FC<EarnPageProps> = ({ missions, onInvite, settings }) => 
       </div>
 
 
-      <div className="bg-primary rounded-2xl p-6 mb-8 flex flex-col sm:flex-row items-center justify-between text-white shadow-lg">
+      <div className="bg-base-200 rounded-2xl p-6 mb-8 flex flex-col sm:flex-row items-center justify-between text-white shadow-lg">
         <div className="text-center sm:text-left mb-4 sm:mb-0">
-          <h3 className="text-2xl font-bold">Convide Amigos</h3>
-          <p className="text-sm opacity-90">Ganhe $5 por cada amigo que se cadastrar!</p>
+          <h3 className="text-2xl font-bold text-primary">Convide Amigos</h3>
+          <p className="text-sm text-gray-300">Ganhe $5 por cada amigo que se cadastrar!</p>
         </div>
-        <button onClick={onInvite} className="bg-white text-primary-dark font-bold py-3 px-6 rounded-xl flex items-center space-x-2 shrink-0 transition-transform hover:scale-105">
+        <button 
+          onClick={onInvite} 
+          className="bg-primary text-white font-bold py-3 px-6 rounded-lg flex items-center space-x-2 shrink-0 shadow-lg shadow-primary/30 transition-all duration-200 ease-in-out transform hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0 active:shadow-md"
+        >
           <Icon name="users" className="w-5 h-5"/>
           <span>Convidar</span>
         </button>

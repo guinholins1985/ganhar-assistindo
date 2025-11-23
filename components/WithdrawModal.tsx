@@ -64,7 +64,10 @@ const WithdrawModal: React.FC<WithdrawModalProps> = ({ onClose, onRequestWithdra
             />
           </div>
           {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
-          <button type="submit" className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-lg transition-colors">
+          <button 
+            type="submit" 
+            className="w-full bg-primary text-white font-bold py-3 px-4 rounded-lg shadow-lg shadow-primary/30 transition-all duration-200 ease-in-out transform hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0 active:shadow-md"
+          >
             Submit Request
           </button>
         </form>

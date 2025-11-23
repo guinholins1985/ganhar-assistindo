@@ -15,9 +15,15 @@ const NavButton: React.FC<{
   isActive: boolean;
   onClick: () => void;
 }> = ({ label, icon, isActive, onClick }) => (
-  <button onClick={onClick} className={`flex flex-col items-center justify-center w-full transition-colors duration-200 ${isActive ? 'text-base-content' : 'text-gray-400 hover:text-base-content'}`}>
-    <Icon name={icon} className="w-6 h-6 mb-1" />
-    <span className="text-[0.6rem] font-bold tracking-wide uppercase">{label}</span>
+  <button 
+    onClick={onClick} 
+    className={`flex flex-col items-center justify-center w-full transition-all duration-200 transform active:scale-90 ${isActive ? 'text-primary' : 'text-gray-400 hover:text-base-content'}`}
+  >
+    <div className="relative w-full flex justify-center">
+      <Icon name={icon} className="w-6 h-6 mb-1" />
+      {isActive && <div className="absolute -bottom-1 w-2 h-2 bg-primary rounded-full"></div>}
+    </div>
+    <span className={`text-[0.6rem] font-bold tracking-wide uppercase ${isActive ? 'text-primary' : ''}`}>{label}</span>
   </button>
 );
 
@@ -39,7 +45,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeView, setActiveView, onAddV
       {/* Floating Action Button */}
       <button 
         onClick={onAddVideoClick} 
-        className="absolute left-1/2 -translate-x-1/2 -top-6 w-16 h-16 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/30 hover:scale-110 transition-transform"
+        className="absolute left-1/2 -translate-x-1/2 -top-6 w-16 h-16 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/40 transition-all duration-200 ease-in-out transform hover:-translate-y-1 hover:shadow-xl active:translate-y-0 active:shadow-md"
         aria-label="Add Video"
       >
         <Icon name="add" className="w-8 h-8 text-white" />

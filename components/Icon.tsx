@@ -47,7 +47,7 @@ const icons: Record<IconName, React.ReactElement> = {
 
 
 const Icon: React.FC<IconProps> = ({ name, className = 'w-6 h-6' }) => {
-  const iconStyle = name === 'heart-filled' ? { fill: '#8B5CF6', stroke: '#8B5CF6' } : { fill: 'none', stroke: 'currentColor', strokeWidth: 1.5 };
+  const iconStyle = name === 'heart-filled' ? { fill: 'currentColor', stroke: 'currentColor' } : { fill: 'none', stroke: 'currentColor', strokeWidth: 1.5 };
   
   if (name === 'play' || name === 'pause') {
     return (

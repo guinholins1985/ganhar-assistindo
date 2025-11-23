@@ -3,7 +3,7 @@
 import { openDB, IDBPDatabase } from 'idb';
 // FIX: Import Category and SystemLog types.
 import { User, Video, Transaction, WithdrawalRequest, AppSettings, Category, SystemLog } from '../types';
-import { INITIAL_USERS, INITIAL_VIDEOS, INITIAL_TRANSACTIONS, INITIAL_WITHDRAWAL_REQUESTS, INITIAL_SETTINGS } from '../constants';
+import { INITIAL_USERS, INITIAL_VIDEOS, INITIAL_TRANSACTIONS, INITIAL_WITHDRAWAL_REQUESTS, INITIAL_SETTINGS, INITIAL_CATEGORIES } from '../constants';
 
 const DB_NAME = 'VideoRewardsDB';
 const DB_VERSION = 1;
@@ -95,6 +95,14 @@ const seedInitialData = async () => {
     if (requestsCount === 0) {
         const tx = db.transaction(STORES.WITHDRAWAL_REQUESTS, 'readwrite');
         await Promise.all(INITIAL_WITHDRAWAL_REQUESTS.map(r => tx.store.add(r)));
+        await tx.done;
+    }
+
+    // Categories
+    const categoriesCount = await db.count(STORES.CATEGORIES);
+    if (categoriesCount === 0) {
+        const tx = db.transaction(STORES.CATEGORIES, 'readwrite');
+        await Promise.all(INITIAL_CATEGORIES.map(cat => tx.store.add(cat)));
         await tx.done;
     }
 };

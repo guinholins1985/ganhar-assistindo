@@ -32,7 +32,10 @@ const AddVideoModal: React.FC<AddVideoModalProps> = ({ onClose, onAddVideo }) =>
             placeholder="https://www.youtube.com/watch?v=..."
             className="w-full bg-base-300 text-white p-3 rounded-lg mb-4 border border-gray-600 focus:ring-2 focus:ring-primary focus:outline-none"
           />
-          <button type="submit" className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-lg transition-colors">
+          <button 
+            type="submit" 
+            className="w-full bg-primary text-white font-bold py-3 px-4 rounded-lg shadow-lg shadow-primary/30 transition-all duration-200 ease-in-out transform hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0 active:shadow-md"
+          >
             Add Video
           </button>
         </form>
