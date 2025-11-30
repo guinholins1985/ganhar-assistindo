@@ -26,6 +26,24 @@ const formatTime = (timeInSeconds: number): string => {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
+const SideActionButton: React.FC<{
+  icon: 'volume-up' | 'volume-off' | 'heart-filled' | 'heart' | 'comment' | 'share' | 'check-circle' | 'clipboard';
+  label?: string;
+  isToggled?: boolean;
+  onClick: (e: React.MouseEvent) => void;
+}> = ({ icon, label, isToggled, onClick }) => (
+  <button 
+    onClick={onClick} 
+    className="flex flex-col items-center group"
+    aria-label={label}
+    >
+    <div className={`w-12 h-12 rounded-full flex items-center justify-center bg-black/40 shadow-lg transition-all duration-200 transform group-hover:scale-110 group-active:scale-95 ${isToggled ? 'text-primary' : 'text-white'}`}>
+       <Icon name={icon} className={`w-7 h-7 drop-shadow-lg ${isToggled && icon==='check-circle' ? 'text-green-400' : ''}`} />
+    </div>
+    {label && <span className="text-xs font-bold text-white mt-1 drop-shadow-md">{label}</span>}
+  </button>
+);
+
 const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onToggleFavorite, rewardAmount, rewardTimeSeconds, onVideoEnd, loadState, isAudioUnlocked }) => {
   const [isMuted, setIsMuted] = useState(!isAudioUnlocked);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -69,7 +87,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
 
   const handleSeek = (seconds: number) => {
     if (playerRef.current) {
-        const newTime = Math.max(0, playerRef.current.getCurrentTime() + seconds);
+        const newTime = Math.max(0, Math.min(totalDuration, playerRef.current.getCurrentTime() + seconds));
         playerRef.current.seekTo(newTime, 'seconds');
         setCurrentTime(newTime);
     }
@@ -134,25 +152,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, user, onAddReward, onT
       </div>
 
       <div className="absolute bottom-20 right-4 flex flex-col items-center space-y-5 z-10">
-        <button onClick={(e) => { e.stopPropagation(); setIsMuted(p => !p); }} className="flex flex-col items-center text-white p-2 bg-black/20 rounded-full transition-transform hover:scale-110">
-          <Icon name={isMuted ? 'volume-off' : 'volume-up'} className="w-7 h-7 drop-shadow-lg" />
-        </button>
-        <button onClick={(e) => { e.stopPropagation(); onToggleFavorite(video.id); }} className="flex flex-col items-center text-white p-2 bg-black/20 rounded-full transition-transform hover:scale-110">
-          <Icon name={isFavorite ? 'heart-filled' : 'heart'} className="w-7 h-7 drop-shadow-lg" />
-        </button>
-        <button onClick={(e) => e.stopPropagation()} className="flex flex-col items-center text-white p-2 bg-black/20 rounded-full transition-transform hover:scale-110">
-          <Icon name="comment" className="w-7 h-7 drop-shadow-lg" />
-        </button>
-        <button onClick={(e) => e.stopPropagation()} className="flex flex-col items-center text-white p-2 bg-black/20 rounded-full transition-transform hover:scale-110">
-          <Icon name="share" className="w-7 h-7 drop-shadow-lg" />
-        </button>
-        <button 
-          onClick={handleCopyLink} 
-          disabled={isLinkCopied}
-          aria-label={isLinkCopied ? "Link Copiado!" : "Copiar Link do Vídeo"}
-          className="flex flex-col items-center text-white p-2 bg-black/20 rounded-full transition-transform hover:scale-110">
-          <Icon name={isLinkCopied ? 'check-circle' : 'clipboard'} className={`w-7 h-7 drop-shadow-lg ${isLinkCopied ? 'text-green-400' : ''}`} />
-        </button>
+        <SideActionButton icon={isMuted ? 'volume-off' : 'volume-up'} onClick={(e) => { e.stopPropagation(); setIsMuted(p => !p); }} />
+        <SideActionButton icon={isFavorite ? 'heart-filled' : 'heart'} isToggled={isFavorite} onClick={(e) => { e.stopPropagation(); onToggleFavorite(video.id); }} />
+        <SideActionButton icon="comment" onClick={(e) => e.stopPropagation()} />
+        <SideActionButton icon="share" onClick={(e) => e.stopPropagation()} />
+        <SideActionButton icon={isLinkCopied ? 'check-circle' : 'clipboard'} isToggled={isLinkCopied} onClick={handleCopyLink} />
+        
         <div className="relative w-12 h-12 flex items-center justify-center">
             <svg className="w-full h-full transform -rotate-90">
                 <circle className="text-gray-600/50" strokeWidth="3" stroke="currentColor" fill="transparent" r="20" cx="24" cy="24" />

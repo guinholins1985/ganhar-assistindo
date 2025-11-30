@@ -7,7 +7,6 @@ import Icon from './Icon';
 
 interface AIPoweredRecommendationsProps {
   watchedVideos: Video[];
-  // FIX: Removed apiKey prop. The key is now handled by the geminiService.
 }
 
 const AIPoweredRecommendations: React.FC<AIPoweredRecommendationsProps> = ({ watchedVideos }) => {
@@ -20,11 +19,17 @@ const AIPoweredRecommendations: React.FC<AIPoweredRecommendationsProps> = ({ wat
       setIsLoading(true);
       setError(null);
       try {
-        // FIX: Call getRecommendations without the apiKey argument.
         const result = await getRecommendations(watchedVideos);
-        setRecommendations(result);
+        // Check if the result is an API key error message
+        if (result.includes('VITE_GEMINI_API_KEY')) {
+          setError(result);
+          setRecommendations('');
+        } else {
+          setRecommendations(result);
+        }
       } catch (err) {
-        setError('Failed to fetch recommendations.');
+        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch recommendations.';
+        setError(errorMessage);
         console.error(err);
       } finally {
         setIsLoading(false);
@@ -32,7 +37,6 @@ const AIPoweredRecommendations: React.FC<AIPoweredRecommendationsProps> = ({ wat
     };
 
     fetchRecs();
-  // FIX: Removed apiKey from the dependency array.
   }, [watchedVideos]);
 
   return (
@@ -53,7 +57,7 @@ const AIPoweredRecommendations: React.FC<AIPoweredRecommendationsProps> = ({ wat
             <span>Analyzing your watch history...</span>
           </div>
         )}
-        {error && <p className="text-red-400">{error}</p>}
+        {error && <p className="text-red-400 font-semibold">{error}</p>}
         {!isLoading && !error && (
           <p className="text-gray-200 whitespace-pre-wrap font-mono text-sm leading-relaxed">
             {recommendations}

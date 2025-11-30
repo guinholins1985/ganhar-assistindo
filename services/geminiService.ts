@@ -3,14 +3,13 @@
 import { GoogleGenAI } from "@google/genai";
 import { Video } from '../types';
 
-// FIX: Removed apiKey parameter. The API key must be sourced from process.env.API_KEY.
 export const getRecommendations = async (watchedVideos: Video[]): Promise<string> => {
   try {
-    // FIX: Check for the API key in environment variables, not from app settings.
+    // FIX: Adhering to Gemini API guidelines to use process.env.API_KEY for the API key.
+    // This assumes the execution environment is configured to provide this variable.
     if (!process.env.API_KEY) {
-      return "A chave de API do Gemini não está configurada no ambiente do aplicativo.";
+      return "A chave de API do Gemini não está configurada no ambiente do aplicativo (API_KEY).";
     }
-    // FIX: Initialize GoogleGenAI with the API key from environment variables.
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
     if (watchedVideos.length === 0) {
@@ -40,7 +39,6 @@ export const getRecommendations = async (watchedVideos: Video[]): Promise<string
       contents: prompt,
     });
 
-    // FIX: Safely handle potentially undefined response text and provide a fallback message.
     return response.text ?? "Desculpe, não consegui gerar recomendações no momento.";
   } catch (error) {
     console.error("Error fetching recommendations from Gemini API:", error);
